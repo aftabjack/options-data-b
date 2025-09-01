@@ -1,0 +1,30 @@
+FROM python:3.9-slim
+
+WORKDIR /app
+
+# Install cron and system dependencies
+RUN apt-get update && apt-get install -y \
+    cron \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements and install
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application files
+COPY scripts/symbol_updater.py .
+COPY telegram_notifier.py .
+COPY data_access.py .
+
+# Setup cron job for 08:05 UTC daily
+RUN echo "5 8 * * * cd /app && /usr/local/bin/python /app/symbol_updater.py >> /app/logs/cron.log 2>&1" > /etc/cron.d/symbol-updater
+RUN chmod 0644 /etc/cron.d/symbol-updater
+RUN crontab /etc/cron.d/symbol-updater
+
+# Create logs directory
+RUN mkdir -p logs
+RUN touch logs/cron.log
+
+# Run cron in foreground
+CMD ["cron", "-f"]

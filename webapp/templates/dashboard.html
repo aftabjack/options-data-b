@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bybit Options Monitor</title>
+    
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- DataTables -->
+    <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        body {
+            background-color: #0d1117;
+            color: #c9d1d9;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            overflow-x: hidden;
+        }
+        
+        /* Mobile responsive adjustments */
+        @media (max-width: 768px) {
+            .navbar-brand {
+                font-size: 14px;
+            }
+            
+            .btn-sm {
+                padding: 0.25rem 0.5rem;
+                font-size: 0.75rem;
+            }
+            
+            .stats-card {
+                padding: 8px;
+                margin-bottom: 8px;
+            }
+            
+            .stats-value {
+                font-size: 1.2rem;
+            }
+            
+            .nav-tabs {
+                overflow-x: auto;
+                flex-wrap: nowrap;
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            .nav-tabs .nav-link {
+                padding: 8px 12px;
+                font-size: 12px;
+                white-space: nowrap;
+            }
+            
+            .table {
+                font-size: 11px;
+            }
+            
+            .table th, .table td {
+                padding: 0.3rem;
+            }
+            
+            /* Hide less important columns on mobile */
+            .mobile-hide {
+                display: none;
+            }
+            
+            .card-body {
+                padding: 0.75rem;
+            }
+            
+            .form-label {
+                font-size: 12px;
+                margin-bottom: 0.25rem;
+            }
+            
+            .form-select {
+                font-size: 13px;
+                padding: 0.375rem 0.75rem;
+            }
+            
+            .input-group-text {
+                font-size: 12px;
+                padding: 0.375rem 0.5rem;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .container-fluid {
+                padding: 0 8px;
+            }
+            
+            .stats-row {
+                flex-direction: column;
+            }
+            
+            .col-md-3, .col-md-6 {
+                margin-bottom: 10px;
+            }
+        }
+        
+        .navbar {
+            background-color: #161b22 !important;
+            border-bottom: 1px solid #30363d;
+        }
+        
+        .nav-tabs {
+            border-bottom: 2px solid #30363d;
+        }
+        
+        .nav-tabs .nav-link {
+            color: #8b949e;
+            border: none;
+            padding: 12px 20px;
+            margin-right: 8px;
+            border-radius: 6px 6px 0 0;
+            transition: all 0.2s;
+        }
+        
+        .nav-tabs .nav-link:hover {
+            background-color: #1f2937;
+            color: #c9d1d9;
+        }
+        
+        .nav-tabs .nav-link.active {
+            background-color: #1f6feb;
+            color: white;
+            border-bottom: 2px solid #1f6feb;
+        }
+        
+        .card {
+            background-color: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+        }
+        
+        .table {
+            color: #c9d1d9;
+        }
+        
+        .table thead th {
+            background-color: #1f2937;
+            color: #f0f6fc;
+            border-color: #30363d;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        .table tbody tr {
+            border-color: #30363d;
+            transition: background-color 0.2s;
+        }
+        
+        .table tbody tr:hover {
+            background-color: #1f2937;
+        }
+        
+        .btn-primary {
+            background-color: #1f6feb;
+            border-color: #1f6feb;
+        }
+        
+        .btn-primary:hover {
+            background-color: #388bfd;
+            border-color: #388bfd;
+        }
+        
+        .btn-add-asset {
+            background-color: #238636;
+            border-color: #238636;
+            color: white;
+        }
+        
+        .btn-add-asset:hover {
+            background-color: #2ea043;
+            border-color: #2ea043;
+        }
+        
+        .dropdown-menu {
+            background-color: #1f2937;
+            border-color: #30363d;
+        }
+        
+        .dropdown-item {
+            color: #c9d1d9;
+        }
+        
+        .dropdown-item:hover {
+            background-color: #30363d;
+            color: white;
+        }
+        
+        .stats-card {
+            background-color: #1f2937;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 10px;
+        }
+        
+        .stats-value {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #58a6ff;
+        }
+        
+        .positive {
+            color: #3fb950 !important;
+        }
+        
+        .negative {
+            color: #f85149 !important;
+        }
+        
+        .neutral {
+            color: #8b949e !important;
+        }
+        
+        .loading {
+            display: none;
+        }
+        
+        .spinner-border {
+            width: 1rem;
+            height: 1rem;
+            border-width: 0.15em;
+        }
+        
+        #liveIndicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: #3fb950;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+            margin-left: 8px;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .modal-content {
+            background-color: #161b22;
+            border: 1px solid #30363d;
+            color: #c9d1d9;
+        }
+        
+        .modal-header {
+            border-bottom: 1px solid #30363d;
+        }
+        
+        .modal-footer {
+            border-top: 1px solid #30363d;
+        }
+        
+        .form-control, .form-select {
+            background-color: #0d1117;
+            border-color: #30363d;
+            color: #c9d1d9;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            background-color: #0d1117;
+            border-color: #1f6feb;
+            color: #c9d1d9;
+            box-shadow: 0 0 0 3px rgba(31, 111, 235, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-chart-line d-none d-sm-inline"></i> 
+                <span class="d-none d-md-inline">Bybit Options</span>
+                <span class="d-md-none">Options</span>
+            </a>
+            <div class="ms-auto d-flex align-items-center">
+                <div class="form-check form-switch me-2 d-none d-md-flex">
+                    <input class="form-check-input" type="checkbox" id="autoRefreshToggle" checked>
+                    <label class="form-check-label text-light" for="autoRefreshToggle">
+                        <span class="d-none d-lg-inline">Auto Refresh (5s)</span>
+                        <span class="d-lg-none">Auto</span>
+                    </label>
+                </div>
+                <button class="btn btn-sm btn-outline-light me-2" onclick="refreshData()">
+                    <i class="fas fa-sync-alt"></i>
+                    <span class="d-none d-sm-inline">Refresh</span>
+                </button>
+                <span class="badge bg-success d-none d-sm-inline-block">
+                    <i class="fas fa-circle"></i> Live
+                    <span id="liveIndicator"></span>
+                </span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-3">
+        <!-- Stats Row -->
+        <div class="row mb-3 stats-row">
+            <div class="col-6 col-md-3">
+                <div class="stats-card">
+                    <div class="text-muted small">Total</div>
+                    <div class="stats-value" id="totalSymbols">-</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stats-card">
+                    <div class="text-muted small d-none d-md-block">Messages</div>
+                    <div class="text-muted small d-md-none">Msgs</div>
+                    <div class="stats-value" id="messagesProcessed">-</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stats-card">
+                    <div class="text-muted small">Updated</div>
+                    <div class="stats-value" id="lastUpdate">-</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stats-card">
+                    <div class="text-muted small d-none d-md-block">Memory</div>
+                    <div class="text-muted small d-md-none">Mem</div>
+                    <div class="stats-value" id="memoryUsage">-</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Asset Tabs -->
+        <ul class="nav nav-tabs" id="assetTabs" role="tablist">
+            {% for symbol, info in assets.items() %}
+                {% if info.enabled %}
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link {% if loop.first %}active{% endif %}" 
+                            id="{{ symbol }}-tab" 
+                            data-bs-toggle="tab" 
+                            data-bs-target="#{{ symbol }}-content" 
+                            type="button" 
+                            role="tab"
+                            onclick="loadAssetData('{{ symbol }}')">
+                        {{ symbol }}
+                    </button>
+                </li>
+                {% endif %}
+            {% endfor %}
+            <li class="nav-item ms-auto d-none d-md-block" role="presentation">
+                <button class="btn btn-add-asset btn-sm mt-2 me-2" onclick="showAddAssetModal()">
+                    <i class="fas fa-plus"></i> <span class="d-none d-lg-inline">Add Asset</span>
+                </button>
+                <button class="btn btn-secondary btn-sm mt-2" onclick="showSettingsModal()">
+                    <i class="fas fa-cog"></i> <span class="d-none d-lg-inline">Settings</span>
+                </button>
+            </li>
+        </ul>
+
+        <!-- Filters -->
+        <div class="card mt-3">
+            <div class="card-body">
+                <div class="row g-2">
+                    <div class="col-12 col-md-3">
+                        <label class="form-label">Expiry Date</label>
+                        <select class="form-select form-select-sm" id="expiryFilter" onchange="applyFilters()">
+                            <option value="all">All Expiries</option>
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-3">
+                        <label class="form-label">Option Type</label>
+                        <select class="form-select form-select-sm" id="typeFilter" onchange="applyFilters()">
+                            <option value="all">All Options</option>
+                            <option value="call">Calls Only</option>
+                            <option value="put">Puts Only</option>
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label">Market Info</label>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-dark text-light" id="currentPrice">Loading...</span>
+                            <span class="input-group-text bg-dark text-light" id="atmStrike">ATM: -</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Table -->
+        <div class="card mt-3">
+            <div class="card-body">
+                <div class="loading text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table id="optionsTable" class="table table-dark table-striped table-hover table-sm">
+                        <thead>
+                            <tr>
+                                <th>Symbol</th>
+                                <th>Type</th>
+                                <th>Strike</th>
+                                <th>Expiry</th>
+                                <th class="d-none d-md-table-cell">Last</th>
+                                <th>Mark</th>
+                                <th>Vol</th>
+                                <th class="d-none d-lg-table-cell">OI</th>
+                                <th>Delta</th>
+                                <th class="d-none d-xl-table-cell">Gamma</th>
+                                <th class="d-none d-xl-table-cell">Theta</th>
+                                <th class="d-none d-xl-table-cell">Vega</th>
+                                <th>IV</th>
+                                <th class="d-none d-lg-table-cell">Underlying</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Asset Modal -->
+    <div class="modal fade" id="addAssetModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add New Asset</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="newAssetSymbol" class="form-label">Symbol (e.g., XRP, MATIC)</label>
+                        <input type="text" class="form-control" id="newAssetSymbol" 
+                               placeholder="Enter symbol" maxlength="10">
+                    </div>
+                    <div class="mb-3">
+                        <label for="newAssetName" class="form-label">Display Name</label>
+                        <input type="text" class="form-control" id="newAssetName" 
+                               placeholder="Enter name (optional)">
+                    </div>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> 
+                        The system will test if this asset has options on Bybit before adding.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="testAssetBtn" onclick="testAsset()">
+                        <i class="fas fa-vial"></i> Test
+                    </button>
+                    <button type="button" class="btn btn-success" id="addAssetBtn" onclick="addAsset()" disabled>
+                        <i class="fas fa-plus"></i> Add Asset
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal fade" id="settingsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Asset Settings</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <table class="table table-dark">
+                        <thead>
+                            <tr>
+                                <th>Symbol</th>
+                                <th>Name</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="assetSettingsTable">
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    
+    <script>
+        let currentAsset = 'BTC';
+        let optionsTable = null;
+        let autoRefreshInterval = null;
+        let eventSource = null;
+        let allOptionsData = [];
+        let currentPrice = 0;
+        let atmStrike = 0;
+
+        // Initialize
+        $(document).ready(function() {
+            // Initialize DataTable
+            optionsTable = $('#optionsTable').DataTable({
+                pageLength: 25,
+                order: [[6, 'desc']], // Sort by volume
+                columns: [
+                    { data: 'symbol' },
+                    { data: 'type', render: renderType },
+                    { data: 'strike' },
+                    { data: 'expiry' },
+                    { data: 'last_price', render: renderPrice },
+                    { data: 'mark_price', render: renderPrice },
+                    { data: 'volume_24h', render: renderVolume },
+                    { data: 'open_interest', render: renderNumber },
+                    { data: 'delta', render: renderDelta },
+                    { data: 'gamma', render: renderSmallNumber },
+                    { data: 'theta', render: renderTheta },
+                    { data: 'vega', render: renderNumber },
+                    { data: 'iv', render: renderIV },
+                    { data: 'underlying', render: renderPrice }
+                ]
+            });
+
+            // Load initial data
+            loadAssetData(currentAsset);
+            
+            // Start auto-refresh
+            startAutoRefresh();
+            
+            // Start stats stream
+            startStatsStream();
+        });
+
+        // Rendering functions
+        function renderType(data) {
+            const color = data === 'Call' ? 'success' : 'danger';
+            return `<span class="badge bg-${color}">${data}</span>`;
+        }
+
+        function renderPrice(data) {
+            return data ? `$${parseFloat(data).toFixed(2)}` : '-';
+        }
+
+        function renderVolume(data) {
+            if (!data) return '-';
+            if (data > 1000000) return `${(data/1000000).toFixed(2)}M`;
+            if (data > 1000) return `${(data/1000).toFixed(2)}K`;
+            return data.toFixed(0);
+        }
+
+        function renderNumber(data) {
+            return data ? parseFloat(data).toFixed(4) : '-';
+        }
+
+        function renderDelta(data) {
+            if (!data) return '-';
+            const value = parseFloat(data);
+            const color = value > 0 ? 'positive' : value < 0 ? 'negative' : 'neutral';
+            return `<span class="${color}">${value.toFixed(4)}</span>`;
+        }
+
+        function renderTheta(data) {
+            if (!data) return '-';
+            const value = parseFloat(data);
+            return `<span class="negative">${value.toFixed(2)}</span>`;
+        }
+
+        function renderSmallNumber(data) {
+            return data ? parseFloat(data).toFixed(6) : '-';
+        }
+
+        function renderIV(data) {
+            return data ? `${(parseFloat(data) * 100).toFixed(1)}%` : '-';
+        }
+
+        // Load asset data
+        function loadAssetData(asset) {
+            currentAsset = asset;
+            $('.loading').show();
+            
+            // Load expiries
+            $.get(`/api/expiries/${asset}`, function(expiries) {
+                const select = $('#expiryFilter');
+                select.html('<option value="all">All Expiries</option>');
+                expiries.forEach(exp => {
+                    // Format date nicely
+                    const dateStr = exp.replace(/^(\d{2})(\w{3})(\d{2})$/, '$1-$2-$3');
+                    select.append(`<option value="${exp}">${dateStr}</option>`);
+                });
+            });
+            
+            // Load options data
+            refreshData();
+        }
+
+        // Refresh data
+        function refreshData() {
+            const expiry = $('#expiryFilter').val();
+            
+            $.get(`/api/options/${currentAsset}`, {
+                expiry: expiry || 'all'
+            }, function(data) {
+                allOptionsData = data;
+                
+                // Update current price and ATM
+                if (data.length > 0) {
+                    currentPrice = data[0].underlying;
+                    $('#currentPrice').text(`$${currentPrice.toFixed(2)}`);
+                    
+                    // Find ATM strike
+                    findATMStrike(data);
+                }
+                
+                // Apply filters
+                applyFilters();
+                
+                $('.loading').hide();
+            }).fail(function() {
+                $('.loading').hide();
+                console.error('Failed to load options data');
+            });
+        }
+        
+        // Find ATM strike
+        function findATMStrike(data) {
+            const strikes = [...new Set(data.map(o => parseFloat(o.strike)))].sort((a, b) => a - b);
+            let minDiff = Infinity;
+            
+            strikes.forEach(strike => {
+                const diff = Math.abs(strike - currentPrice);
+                if (diff < minDiff) {
+                    minDiff = diff;
+                    atmStrike = strike;
+                }
+            });
+            
+            $('#atmStrike').text(`ATM: ${atmStrike}`);
+        }
+
+        // Apply filters
+        function applyFilters() {
+            const typeFilter = $('#typeFilter').val();
+            const expiry = $('#expiryFilter').val();
+            
+            let filtered = allOptionsData;
+            
+            // Apply type filter
+            if (typeFilter !== 'all') {
+                filtered = filtered.filter(item => {
+                    if (typeFilter === 'call') {
+                        return item.type === 'Call';
+                    } else if (typeFilter === 'put') {
+                        return item.type === 'Put';
+                    }
+                    return true;
+                });
+            }
+            
+            // Update table
+            optionsTable.clear();
+            optionsTable.rows.add(filtered);
+            optionsTable.draw();
+        }
+
+        // Auto refresh
+        function startAutoRefresh() {
+            const checkbox = $('#autoRefreshToggle');
+            
+            if (checkbox.is(':checked')) {
+                if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+                autoRefreshInterval = setInterval(refreshData, 5000);
+            } else {
+                if (autoRefreshInterval) {
+                    clearInterval(autoRefreshInterval);
+                    autoRefreshInterval = null;
+                }
+            }
+        }
+        
+        // Initialize auto refresh toggle
+        $('#autoRefreshToggle').change(function() {
+            startAutoRefresh();
+        });
+
+        // Stats stream
+        function startStatsStream() {
+            eventSource = new EventSource('/api/stream');
+            
+            eventSource.onmessage = function(event) {
+                const stats = JSON.parse(event.data);
+                
+                $('#totalSymbols').text(stats.total_symbols || '-');
+                $('#messagesProcessed').text(formatNumber(stats.messages_processed || 0));
+                $('#memoryUsage').text(stats.redis_memory || '-');
+                
+                if (stats.last_update) {
+                    const date = new Date(parseFloat(stats.last_update) * 1000);
+                    $('#lastUpdate').text(date.toLocaleTimeString());
+                }
+            };
+        }
+
+        // Format numbers
+        function formatNumber(num) {
+            if (num > 1000000) return `${(num/1000000).toFixed(1)}M`;
+            if (num > 1000) return `${(num/1000).toFixed(1)}K`;
+            return num.toString();
+        }
+
+        // Modal functions
+        function showAddAssetModal() {
+            $('#addAssetModal').modal('show');
+        }
+
+        function showSettingsModal() {
+            // Load current assets
+            $.get('/api/assets', function(assets) {
+                const tbody = $('#assetSettingsTable');
+                tbody.empty();
+                
+                Object.entries(assets).forEach(([symbol, info]) => {
+                    const statusBadge = info.enabled 
+                        ? '<span class="badge bg-success">Enabled</span>'
+                        : '<span class="badge bg-secondary">Disabled</span>';
+                    
+                    const toggleBtn = info.enabled
+                        ? `<button class="btn btn-sm btn-warning" onclick="toggleAsset('${symbol}')">Disable</button>`
+                        : `<button class="btn btn-sm btn-success" onclick="toggleAsset('${symbol}')">Enable</button>`;
+                    
+                    const removeBtn = ['BTC', 'ETH', 'SOL'].includes(symbol)
+                        ? '<button class="btn btn-sm btn-danger" disabled>Default</button>'
+                        : `<button class="btn btn-sm btn-danger" onclick="removeAsset('${symbol}')">Remove</button>`;
+                    
+                    tbody.append(`
+                        <tr>
+                            <td>${symbol}</td>
+                            <td>${info.name}</td>
+                            <td>${statusBadge}</td>
+                            <td>
+                                ${toggleBtn}
+                                ${removeBtn}
+                            </td>
+                        </tr>
+                    `);
+                });
+            });
+            
+            $('#settingsModal').modal('show');
+        }
+
+        // Asset management
+        function testAsset() {
+            const symbol = $('#newAssetSymbol').val().toUpperCase();
+            
+            if (!symbol) {
+                alert('Please enter a symbol');
+                return;
+            }
+            
+            // Show loading state
+            $('#testAssetBtn').prop('disabled', true).text('Testing...');
+            
+            $.ajax({
+                url: '/api/assets/test',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ symbol: symbol }),
+                success: function(response) {
+                    $('#testAssetBtn').prop('disabled', false).text('Test');
+                    if (response.success) {
+                        alert(`✅ Success! ${response.message}`);
+                        // Enable the Add button if test passed
+                        $('#addAssetBtn').prop('disabled', false);
+                    } else {
+                        alert(`❌ Failed: ${response.message}`);
+                        $('#addAssetBtn').prop('disabled', true);
+                    }
+                },
+                error: function(xhr) {
+                    $('#testAssetBtn').prop('disabled', false).text('Test');
+                    alert(`Error: ${xhr.responseJSON?.detail || 'Failed to test asset'}`);
+                }
+            });
+        }
+
+        function addAsset() {
+            const symbol = $('#newAssetSymbol').val().toUpperCase();
+            const name = $('#newAssetName').val() || symbol;
+            
+            if (!symbol) {
+                alert('Please enter a symbol');
+                return;
+            }
+            
+            $.ajax({
+                url: '/api/assets/add',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ symbol: symbol, name: name }),
+                success: function(response) {
+                    alert(`Successfully added ${symbol}`);
+                    location.reload();
+                },
+                error: function(xhr) {
+                    const error = xhr.responseJSON.error || 'Failed to add asset';
+                    alert(error);
+                }
+            });
+        }
+
+        function toggleAsset(symbol) {
+            $.post(`/api/assets/${symbol}/toggle`, function() {
+                showSettingsModal(); // Refresh
+            });
+        }
+
+        function removeAsset(symbol) {
+            if (confirm(`Remove ${symbol} from monitoring?`)) {
+                $.ajax({
+                    url: `/api/assets/${symbol}/remove`,
+                    method: 'DELETE',
+                    success: function() {
+                        location.reload();
+                    },
+                    error: function(xhr) {
+                        alert(xhr.responseJSON.error || 'Failed to remove asset');
+                    }
+                });
+            }
+        }
+    </script>
+</body>
+</html>

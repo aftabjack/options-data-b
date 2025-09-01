@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TEST - Options Chain</title>
+    
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background-color: #0a0a0a;
+            color: #e0e0e0;
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+            font-size: 13px;
+            overflow-x: auto;
+        }
+        
+        /* Header */
+        .header {
+            background-color: #1a1a1a;
+            padding: 8px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #333;
+        }
+        
+        .header-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #fff;
+        }
+        
+        .header-time {
+            color: #888;
+            font-size: 12px;
+        }
+        
+        /* Asset Bar */
+        .asset-bar {
+            background-color: #0d0d0d;
+            padding: 5px 10px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border-bottom: 1px solid #222;
+            overflow-x: auto;
+        }
+        
+        .asset-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 5px 12px;
+            background: #1a1a1a;
+            border-radius: 4px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+        
+        .asset-item:hover {
+            background: #2a2a2a;
+        }
+        
+        .asset-item.active {
+            background: #f39c12;
+            color: #000;
+        }
+        
+        .asset-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #f39c12, #f1c40f);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 10px;
+        }
+        
+        .asset-price {
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .asset-change {
+            font-size: 11px;
+        }
+        
+        .positive { color: #00ff00; }
+        .negative { color: #ff0000; }
+        
+        /* Control Bar */
+        .control-bar {
+            background-color: #151515;
+            padding: 8px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #333;
+        }
+        
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .btn-control {
+            padding: 4px 12px;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            color: #fff;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-control:hover {
+            background: #3a3a3a;
+            border-color: #555;
+        }
+        
+        .btn-control.active {
+            background: #f39c12;
+            color: #000;
+            border-color: #f39c12;
+        }
+        
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 20px;
+        }
+        
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #444;
+            transition: 0.3s;
+            border-radius: 20px;
+        }
+        
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 14px;
+            width: 14px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .slider {
+            background-color: #00ff00;
+        }
+        
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+        
+        /* Date Tabs */
+        .date-tabs {
+            background-color: #0a0a0a;
+            padding: 8px 15px;
+            display: flex;
+            gap: 5px;
+            overflow-x: auto;
+            border-bottom: 1px solid #222;
+        }
+        
+        .date-tab {
+            padding: 6px 14px;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 4px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+            font-size: 12px;
+        }
+        
+        .date-tab:hover {
+            background: #2a2a2a;
+            border-color: #444;
+        }
+        
+        .date-tab.active {
+            background: #2a2a2a;
+            border-color: #f39c12;
+            color: #f39c12;
+        }
+        
+        /* Info Bar */
+        .info-bar {
+            background: linear-gradient(90deg, #1a1a1a, #0d0d0d);
+            padding: 10px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #333;
+        }
+        
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .info-label {
+            color: #888;
+            font-size: 11px;
+            text-transform: uppercase;
+        }
+        
+        .info-value {
+            color: #fff;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        /* Options Table */
+        .options-container {
+            display: flex;
+            height: calc(100vh - 250px);
+            overflow: hidden;
+        }
+        
+        .calls-section, .puts-section {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+        
+        .calls-section {
+            border-right: 2px solid #333;
+        }
+        
+        .section-header {
+            background: #1a1a1a;
+            padding: 8px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 14px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .calls-header {
+            color: #00ff00;
+        }
+        
+        .puts-header {
+            color: #ff0000;
+        }
+        
+        .strike-divider {
+            background: #222;
+            padding: 8px;
+            text-align: center;
+            font-weight: 600;
+            position: sticky;
+            top: 34px;
+            z-index: 9;
+            border-top: 1px solid #333;
+            border-bottom: 1px solid #333;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        thead {
+            background: #151515;
+            position: sticky;
+            top: 68px;
+            z-index: 8;
+        }
+        
+        th {
+            padding: 6px 8px;
+            text-align: right;
+            font-size: 11px;
+            font-weight: 500;
+            color: #888;
+            text-transform: uppercase;
+            border-bottom: 1px solid #333;
+        }
+        
+        th:first-child {
+            text-align: left;
+        }
+        
+        td {
+            padding: 4px 8px;
+            text-align: right;
+            font-size: 12px;
+            border-bottom: 1px solid #111;
+        }
+        
+        td:first-child {
+            text-align: left;
+        }
+        
+        tbody tr:hover {
+            background: #1a1a1a;
+        }
+        
+        tbody tr.atm {
+            background: #1a1a1a;
+        }
+        
+        .volume-bar {
+            display: inline-block;
+            height: 3px;
+            background: #f39c12;
+            opacity: 0.5;
+            margin-left: 5px;
+        }
+        
+        .strike-cell {
+            font-weight: 600;
+            color: #fff;
+            text-align: center !important;
+        }
+        
+        /* Filter Checkboxes */
+        .filter-group {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .filter-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+        }
+        
+        .filter-checkbox input[type="checkbox"] {
+            cursor: pointer;
+        }
+        
+        .filter-checkbox label {
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #888;
+        }
+        
+        .spinner {
+            border: 3px solid #333;
+            border-top: 3px solid #f39c12;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #0a0a0a;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #444;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-title">TEST</div>
+        <div class="header-time" id="currentTime"></div>
+    </div>
+    
+    <!-- Asset Bar -->
+    <div class="asset-bar" id="assetBar">
+        <!-- Assets will be loaded here -->
+    </div>
+    
+    <!-- Control Bar -->
+    <div class="control-bar">
+        <div class="control-group">
+            <button class="btn-control" onclick="showAddAssetModal()">
+                <i class="fas fa-plus"></i> Add Asset
+            </button>
+            <button class="btn-control" onclick="refreshData()">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 12px;">Auto Refresh</span>
+                <label class="switch">
+                    <input type="checkbox" id="autoRefresh" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+        
+        <div class="filter-group">
+            <div class="filter-checkbox">
+                <input type="checkbox" id="aroundATM" checked>
+                <label for="aroundATM">Around ATM</label>
+            </div>
+            <div class="filter-checkbox">
+                <input type="checkbox" id="strikeRange">
+                <label for="strikeRange">Strike Range</label>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Date Tabs -->
+    <div class="date-tabs" id="dateTabs">
+        <!-- Dates will be loaded here -->
+    </div>
+    
+    <!-- Info Bar -->
+    <div class="info-bar">
+        <div class="info-item">
+            <span class="info-label">Asset Price:</span>
+            <span class="info-value" id="assetPrice">-</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">ATM Vol:</span>
+            <span class="info-value" id="atmVol">-</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Selected Date:</span>
+            <span class="info-value" id="selectedDate">-</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Time to Expiry:</span>
+            <span class="info-value" id="timeToExpiry">-</span>
+        </div>
+    </div>
+    
+    <!-- Options Chain -->
+    <div class="options-container">
+        <!-- Calls Section -->
+        <div class="calls-section">
+            <div class="section-header calls-header">Calls</div>
+            <table id="callsTable">
+                <thead>
+                    <tr>
+                        <th>Open</th>
+                        <th>Delta</th>
+                        <th>Bid Size</th>
+                        <th>Bid/IV</th>
+                        <th>Mark/IV</th>
+                        <th>Ask/IV</th>
+                        <th>Ask Size</th>
+                        <th>Position</th>
+                    </tr>
+                </thead>
+                <tbody id="callsBody">
+                    <!-- Calls data will be loaded here -->
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Strike Column -->
+        <div style="position: absolute; left: 50%; transform: translateX(-50%); background: #1a1a1a; z-index: 20;">
+            <div class="strike-divider">Strike</div>
+            <table>
+                <thead>
+                    <tr><th style="padding: 6px 20px;">Strike</th></tr>
+                </thead>
+                <tbody id="strikeColumn">
+                    <!-- Strike prices will be loaded here -->
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Puts Section -->
+        <div class="puts-section">
+            <div class="section-header puts-header">Puts</div>
+            <table id="putsTable">
+                <thead>
+                    <tr>
+                        <th>Position</th>
+                        <th>Bid Size</th>
+                        <th>Bid/IV</th>
+                        <th>Mark/IV</th>
+                        <th>Ask/IV</th>
+                        <th>Ask Size</th>
+                        <th>Delta</th>
+                        <th>Open</th>
+                    </tr>
+                </thead>
+                <tbody id="putsBody">
+                    <!-- Puts data will be loaded here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Add Asset Modal -->
+    <div class="modal fade" id="addAssetModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content" style="background: #1a1a1a; border: 1px solid #333;">
+                <div class="modal-header" style="border-bottom: 1px solid #333;">
+                    <h5 class="modal-title" style="color: #fff;">Add New Asset</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label" style="color: #888;">Symbol</label>
+                        <input type="text" class="form-control" id="newSymbol" 
+                               style="background: #0a0a0a; border: 1px solid #333; color: #fff;"
+                               placeholder="e.g., XRP, MATIC">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" style="color: #888;">Name</label>
+                        <input type="text" class="form-control" id="newName" 
+                               style="background: #0a0a0a; border: 1px solid #333; color: #fff;"
+                               placeholder="Optional">
+                    </div>
+                </div>
+                <div class="modal-footer" style="border-top: 1px solid #333;">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-warning" onclick="addAsset()">Add Asset</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        let currentAsset = 'BTC';
+        let currentExpiry = '';
+        let optionsData = [];
+        let autoRefreshInterval = null;
+        let assetPrices = {};
+        
+        // Initialize
+        $(document).ready(function() {
+            updateTime();
+            setInterval(updateTime, 1000);
+            loadAssets();
+            startAutoRefresh();
+            
+            // Event listeners
+            $('#autoRefresh').change(function() {
+                startAutoRefresh();
+            });
+            
+            $('#aroundATM, #strikeRange').change(function() {
+                filterOptions();
+            });
+        });
+        
+        // Update time
+        function updateTime() {
+            const now = new Date();
+            const date = now.toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: '2-digit', 
+                day: '2-digit' 
+            });
+            const time = now.toLocaleTimeString('en-US', { 
+                hour12: false,
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            $('#currentTime').text(`${date} ${time}`);
+        }
+        
+        // Load assets
+        function loadAssets() {
+            $.get('/api/assets', function(assets) {
+                const assetBar = $('#assetBar');
+                assetBar.empty();
+                
+                Object.entries(assets).forEach(([symbol, info], index) => {
+                    if (info.enabled) {
+                        const assetDiv = $(`
+                            <div class="asset-item ${index === 0 ? 'active' : ''}" 
+                                 data-asset="${symbol}" onclick="selectAsset('${symbol}')">
+                                <div class="asset-icon">${symbol.charAt(0)}</div>
+                                <div>
+                                    <div class="asset-price" id="price-${symbol}">-</div>
+                                    <div class="asset-change" id="change-${symbol}">-</div>
+                                </div>
+                            </div>
+                        `);
+                        assetBar.append(assetDiv);
+                        
+                        if (index === 0) {
+                            selectAsset(symbol);
+                        }
+                    }
+                });
+            });
+        }
+        
+        // Select asset
+        function selectAsset(asset) {
+            currentAsset = asset;
+            $('.asset-item').removeClass('active');
+            $(`.asset-item[data-asset="${asset}"]`).addClass('active');
+            loadExpiries();
+        }
+        
+        // Load expiries
+        function loadExpiries() {
+            $.get(`/api/expiries/${currentAsset}`, function(expiries) {
+                const dateTabs = $('#dateTabs');
+                dateTabs.empty();
+                
+                // Add "All" tab
+                dateTabs.append('<div class="date-tab" data-expiry="all" onclick="selectExpiry(\'all\')">All</div>');
+                
+                // Add expiry tabs
+                expiries.forEach((expiry, index) => {
+                    const dateStr = formatExpiry(expiry);
+                    const tab = $(`
+                        <div class="date-tab ${index === 0 ? 'active' : ''}" 
+                             data-expiry="${expiry}" 
+                             onclick="selectExpiry('${expiry}')">
+                            ${dateStr}
+                        </div>
+                    `);
+                    dateTabs.append(tab);
+                    
+                    if (index === 0) {
+                        selectExpiry(expiry);
+                    }
+                });
+            });
+        }
+        
+        // Format expiry date
+        function formatExpiry(expiry) {
+            // Convert 2SEP25 to 2025-09-02
+            const match = expiry.match(/(\d+)([A-Z]{3})(\d{2})/);
+            if (match) {
+                const day = match[1];
+                const month = match[2];
+                const year = '20' + match[3];
+                return `${year}-${getMonthNumber(month)}-${day.padStart(2, '0')}`;
+            }
+            return expiry;
+        }
+        
+        function getMonthNumber(month) {
+            const months = {
+                'JAN': '01', 'FEB': '02', 'MAR': '03', 'APR': '04',
+                'MAY': '05', 'JUN': '06', 'JUL': '07', 'AUG': '08',
+                'SEP': '09', 'OCT': '10', 'NOV': '11', 'DEC': '12'
+            };
+            return months[month] || month;
+        }
+        
+        // Select expiry
+        function selectExpiry(expiry) {
+            currentExpiry = expiry;
+            $('.date-tab').removeClass('active');
+            $(`.date-tab[data-expiry="${expiry}"]`).addClass('active');
+            
+            $('#selectedDate').text(formatExpiry(expiry));
+            calculateTimeToExpiry(expiry);
+            refreshData();
+        }
+        
+        // Calculate time to expiry
+        function calculateTimeToExpiry(expiry) {
+            if (expiry === 'all') {
+                $('#timeToExpiry').text('-');
+                return;
+            }
+            
+            const expiryDate = parseExpiry(expiry);
+            const now = new Date();
+            const diff = expiryDate - now;
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            
+            $('#timeToExpiry').text(`${days}d ${hours}h`);
+        }
+        
+        function parseExpiry(expiry) {
+            const match = expiry.match(/(\d+)([A-Z]{3})(\d{2})/);
+            if (match) {
+                const day = parseInt(match[1]);
+                const month = getMonthNumber(match[2]);
+                const year = 2000 + parseInt(match[3]);
+                return new Date(year, parseInt(month) - 1, day, 23, 59, 59);
+            }
+            return new Date();
+        }
+        
+        // Refresh data
+        function refreshData() {
+            $.get(`/api/options/${currentAsset}`, {
+                expiry: currentExpiry,
+                type: 'all'
+            }, function(data) {
+                optionsData = data;
+                displayOptionsChain(data);
+                updateAssetPrice();
+            });
+        }
+        
+        // Display options chain
+        function displayOptionsChain(data) {
+            // Group by strike
+            const strikeMap = {};
+            
+            data.forEach(option => {
+                const strike = parseFloat(option.strike);
+                if (!strikeMap[strike]) {
+                    strikeMap[strike] = { calls: null, puts: null };
+                }
+                
+                if (option.type === 'Call') {
+                    strikeMap[strike].calls = option;
+                } else {
+                    strikeMap[strike].puts = option;
+                }
+            });
+            
+            // Sort strikes
+            const strikes = Object.keys(strikeMap).map(Number).sort((a, b) => a - b);
+            
+            // Clear tables
+            $('#callsBody').empty();
+            $('#putsBody').empty();
+            $('#strikeColumn').empty();
+            
+            // Find ATM strike
+            const spotPrice = data[0]?.underlying || 0;
+            const atmStrike = findATMStrike(strikes, spotPrice);
+            
+            // Display data
+            strikes.forEach(strike => {
+                const callOption = strikeMap[strike].calls;
+                const putOption = strikeMap[strike].puts;
+                const isATM = strike === atmStrike;
+                
+                // Calls row
+                const callRow = $(`
+                    <tr ${isATM ? 'class="atm"' : ''}>
+                        <td>${formatNumber(callOption?.open_interest || 0)}</td>
+                        <td class="${callOption?.delta > 0 ? 'positive' : 'negative'}">
+                            ${formatDelta(callOption?.delta || 0)}
+                        </td>
+                        <td>${formatNumber(callOption?.volume_24h || 0)}</td>
+                        <td>${formatPrice(callOption?.last_price || 0)}<br>
+                            <small style="color:#888">${formatIV(callOption?.iv || 0)}</small>
+                        </td>
+                        <td>${formatPrice(callOption?.mark_price || 0)}<br>
+                            <small style="color:#888">${formatIV(callOption?.iv || 0)}</small>
+                        </td>
+                        <td>${formatPrice(callOption?.mark_price || 0)}<br>
+                            <small style="color:#888">${formatIV(callOption?.iv || 0)}</small>
+                        </td>
+                        <td>${formatNumber(callOption?.volume_24h || 0)}</td>
+                        <td>--</td>
+                    </tr>
+                `);
+                $('#callsBody').append(callRow);
+                
+                // Strike column
+                $('#strikeColumn').append(`
+                    <tr ${isATM ? 'class="atm"' : ''}>
+                        <td class="strike-cell">${formatStrike(strike)}</td>
+                    </tr>
+                `);
+                
+                // Puts row
+                const putRow = $(`
+                    <tr ${isATM ? 'class="atm"' : ''}>
+                        <td>--</td>
+                        <td>${formatNumber(putOption?.volume_24h || 0)}</td>
+                        <td>${formatPrice(putOption?.last_price || 0)}<br>
+                            <small style="color:#888">${formatIV(putOption?.iv || 0)}</small>
+                        </td>
+                        <td>${formatPrice(putOption?.mark_price || 0)}<br>
+                            <small style="color:#888">${formatIV(putOption?.iv || 0)}</small>
+                        </td>
+                        <td>${formatPrice(putOption?.mark_price || 0)}<br>
+                            <small style="color:#888">${formatIV(putOption?.iv || 0)}</small>
+                        </td>
+                        <td>${formatNumber(putOption?.volume_24h || 0)}</td>
+                        <td class="${putOption?.delta < 0 ? 'negative' : 'positive'}">
+                            ${formatDelta(putOption?.delta || 0)}
+                        </td>
+                        <td>${formatNumber(putOption?.open_interest || 0)}</td>
+                    </tr>
+                `);
+                $('#putsBody').append(putRow);
+            });
+        }
+        
+        // Find ATM strike
+        function findATMStrike(strikes, spotPrice) {
+            let minDiff = Infinity;
+            let atmStrike = strikes[0];
+            
+            strikes.forEach(strike => {
+                const diff = Math.abs(strike - spotPrice);
+                if (diff < minDiff) {
+                    minDiff = diff;
+                    atmStrike = strike;
+                }
+            });
+            
+            return atmStrike;
+        }
+        
+        // Update asset price
+        function updateAssetPrice() {
+            if (optionsData.length > 0) {
+                const price = optionsData[0].underlying;
+                $('#assetPrice').text(formatPrice(price));
+                $(`#price-${currentAsset}`).text(formatPrice(price));
+                
+                // Calculate change (mock for now)
+                const change = (Math.random() - 0.5) * 5;
+                const changeClass = change > 0 ? 'positive' : 'negative';
+                $(`#change-${currentAsset}`).html(`
+                    <span class="${changeClass}">${change > 0 ? '+' : ''}${change.toFixed(2)}%</span>
+                `);
+                
+                // Update ATM Vol
+                const atmVol = optionsData[Math.floor(optionsData.length / 2)]?.iv || 0;
+                $('#atmVol').text(formatIV(atmVol));
+            }
+        }
+        
+        // Format functions
+        function formatNumber(num) {
+            if (num > 1000000) return `${(num/1000000).toFixed(1)}M`;
+            if (num > 1000) return `${(num/1000).toFixed(1)}K`;
+            return num.toFixed(0);
+        }
+        
+        function formatPrice(price) {
+            return price.toFixed(2);
+        }
+        
+        function formatStrike(strike) {
+            return strike.toLocaleString();
+        }
+        
+        function formatDelta(delta) {
+            return delta.toFixed(4);
+        }
+        
+        function formatIV(iv) {
+            return `${(iv * 100).toFixed(1)}%`;
+        }
+        
+        // Filter options
+        function filterOptions() {
+            const aroundATM = $('#aroundATM').is(':checked');
+            const strikeRange = $('#strikeRange').is(':checked');
+            
+            // Apply filters
+            if (aroundATM) {
+                // Show only strikes near ATM
+                // Implementation here
+            }
+            
+            if (strikeRange) {
+                // Show strike range selector
+                // Implementation here
+            }
+            
+            refreshData();
+        }
+        
+        // Auto refresh
+        function startAutoRefresh() {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
+            }
+            
+            if ($('#autoRefresh').is(':checked')) {
+                autoRefreshInterval = setInterval(refreshData, 5000);
+            }
+        }
+        
+        // Add asset modal
+        function showAddAssetModal() {
+            $('#addAssetModal').modal('show');
+        }
+        
+        function addAsset() {
+            const symbol = $('#newSymbol').val().toUpperCase();
+            const name = $('#newName').val() || symbol;
+            
+            if (!symbol) {
+                alert('Please enter a symbol');
+                return;
+            }
+            
+            $.ajax({
+                url: '/api/assets/add',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ symbol: symbol, name: name }),
+                success: function() {
+                    $('#addAssetModal').modal('hide');
+                    loadAssets();
+                },
+                error: function(xhr) {
+                    alert(xhr.responseJSON.detail || 'Failed to add asset');
+                }
+            });
+        }
+    </script>
+</body>
+</html>

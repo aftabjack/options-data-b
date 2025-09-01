@@ -1,0 +1,133 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: bybit-redis
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    networks:
+      - bybit-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    mem_limit: 512m
+    memswap_limit: 512m
+    cpus: 0.5
+
+  tracker:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: bybit-tracker
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+      - CLEAR_DB_ON_START=${CLEAR_DB_ON_START:-false}
+      - BATCH_SIZE=200
+      - BATCH_TIMEOUT=2.0
+      - WS_PING_INTERVAL=45
+      - WS_PING_TIMEOUT=15
+      - WS_RECONNECT_DELAY=10
+      - WS_SUBSCRIPTION_CHUNK_SIZE=100
+      - SYMBOL_CACHE_TTL=86400
+      - HEALTH_CHECK_PORT=8080
+      - ENABLE_NOTIFICATIONS=${ENABLE_NOTIFICATIONS:-false}
+      - TELEGRAM_API_ID=${TELEGRAM_API_ID:-}
+      - TELEGRAM_API_HASH=${TELEGRAM_API_HASH:-}
+      - TELEGRAM_NOTIFICATION_CHANNEL=${TELEGRAM_NOTIFICATION_CHANNEL:-}
+    volumes:
+      - ./symbols_cache.json:/app/symbols_cache.json
+      - ./logs:/app/logs
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    networks:
+      - bybit-network
+    mem_limit: 256m
+    memswap_limit: 256m
+    cpus: 1.0
+
+  webapp:
+    build:
+      context: .
+      dockerfile: Dockerfile.webapp
+    container_name: bybit-webapp
+    depends_on:
+      redis:
+        condition: service_healthy
+    ports:
+      - "5001:5001"
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+    restart: unless-stopped
+    networks:
+      - bybit-network
+
+  cron:
+    build:
+      context: .
+      dockerfile: Dockerfile.cron
+    container_name: bybit-cron
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+      - OPTION_ASSETS=BTC,ETH,SOL
+      - ENABLE_NOTIFICATIONS=${ENABLE_NOTIFICATIONS:-false}
+      - TELEGRAM_API_ID=${TELEGRAM_API_ID:-}
+      - TELEGRAM_API_HASH=${TELEGRAM_API_HASH:-}
+      - TELEGRAM_NOTIFICATION_CHANNEL=${TELEGRAM_NOTIFICATION_CHANNEL:-}
+    volumes:
+      - ./logs:/app/logs
+      - ./symbols_cache.json:/app/symbols_cache.json
+    restart: unless-stopped
+    networks:
+      - bybit-network
+
+  dataapi:
+    build:
+      context: .
+      dockerfile: Dockerfile.dataapi
+    container_name: bybit-dataapi
+    depends_on:
+      redis:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+      - DATA_API_PORT=8000
+    restart: unless-stopped
+    networks:
+      - bybit-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 3s
+      start_period: 5s
+      retries: 3
+
+volumes:
+  redis_data:
+    driver: local
+
+networks:
+  bybit-network:
+    driver: bridge

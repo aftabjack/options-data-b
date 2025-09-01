@@ -1,0 +1,65 @@
+BYBIT OPTIONS TRACKER - PRODUCTION MANIFEST
+============================================
+Version: 1.0.0
+Date: 2025-09-01
+Status: Production Ready
+
+FILE INVENTORY
+--------------
+
+CORE APPLICATION (5 files):
+• options_tracker_production.py - Main WebSocket tracker
+• data_api.py - REST API server
+• data_access.py - Data access library
+• telegram_notifier.py - Telegram notifications
+• requirements.txt - Python dependencies
+
+DOCKER CONFIGURATION (6 files):
+• docker-compose.yml - Container orchestration
+• Dockerfile - Tracker container
+• Dockerfile.webapp - Web interface container
+• Dockerfile.dataapi - API container
+• Dockerfile.cron - Cron job container
+• docker-start.sh - Start script
+• docker-stop.sh - Stop script
+
+UTILITY SCRIPTS (4 files):
+• scripts/check_status.py - System status monitor
+• scripts/health_check.sh - Health check script
+• scripts/monitor_resources.py - Resource monitor
+• scripts/symbol_updater.py - Daily symbol updater
+
+WEB INTERFACE (2 files):
+• webapp/app_fastapi.py - FastAPI web server
+• webapp/templates/dashboard.html - Web dashboard
+
+CONFIGURATION (2 files):
+• .env - Environment variables
+• .gitignore - Git ignore rules
+
+DATA (1 file):
+• symbols_cache.json - Cached symbol list
+
+DOCUMENTATION (1 file):
+• README.md - Quick start guide
+
+TOTAL: 23 files (production ready)
+
+DEPLOYMENT CHECKLIST
+--------------------
+✓ All test files removed
+✓ Documentation moved to separate folder
+✓ Docker configuration optimized
+✓ Resource limits applied
+✓ Scripts executable
+✓ Production ready
+
+TO START:
+---------
+./docker-start.sh
+
+TO MONITOR:
+-----------
+python3 scripts/check_status.py
+
+END OF MANIFEST

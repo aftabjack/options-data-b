@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Options Filter - Simple View</title>
+    
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        body {
+            background-color: #0d1117;
+            color: #c9d1d9;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+        }
+        
+        .navbar {
+            background-color: #161b22 !important;
+            border-bottom: 1px solid #30363d;
+        }
+        
+        .filter-window {
+            background-color: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .filter-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #0d1117;
+            border-radius: 6px;
+            border: 1px solid #30363d;
+        }
+        
+        .section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #58a6ff;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .asset-selector {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .asset-btn {
+            padding: 10px 20px;
+            background: #1f2937;
+            border: 2px solid #30363d;
+            border-radius: 6px;
+            color: #c9d1d9;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+            position: relative;
+        }
+        
+        .asset-btn:hover {
+            background: #2d3748;
+            border-color: #58a6ff;
+        }
+        
+        .asset-btn.active {
+            background: #1f6feb;
+            border-color: #1f6feb;
+            color: white;
+        }
+        
+        .asset-price {
+            font-size: 11px;
+            color: #8b949e;
+            display: block;
+            margin-top: 3px;
+        }
+        
+        .strike-selector {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .strike-btn {
+            padding: 8px 16px;
+            background: #1f2937;
+            border: 1px solid #30363d;
+            border-radius: 4px;
+            color: #c9d1d9;
+            cursor: pointer;
+            transition: all 0.2s;
+            min-width: 80px;
+            text-align: center;
+        }
+        
+        .strike-btn:hover {
+            background: #2d3748;
+            border-color: #58a6ff;
+        }
+        
+        .strike-btn.active {
+            background: #f39c12;
+            border-color: #f39c12;
+            color: #000;
+            font-weight: 600;
+        }
+        
+        .strike-btn.atm {
+            border: 2px solid #3fb950;
+            position: relative;
+        }
+        
+        .strike-btn.atm::after {
+            content: 'ATM';
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #3fb950;
+            color: #000;
+            font-size: 9px;
+            padding: 1px 4px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+        
+        .type-selector {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+        
+        .type-btn {
+            flex: 1;
+            padding: 12px;
+            background: #1f2937;
+            border: 2px solid #30363d;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+            font-weight: 600;
+            font-size: 16px;
+        }
+        
+        .type-btn:hover {
+            transform: scale(1.02);
+        }
+        
+        .type-btn.calls {
+            color: #3fb950;
+        }
+        
+        .type-btn.calls.active {
+            background: #3fb950;
+            border-color: #3fb950;
+            color: #000;
+        }
+        
+        .type-btn.puts {
+            color: #f85149;
+        }
+        
+        .type-btn.puts.active {
+            background: #f85149;
+            border-color: #f85149;
+            color: #fff;
+        }
+        
+        .expiry-selector {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .expiry-btn {
+            padding: 6px 12px;
+            background: #1f2937;
+            border: 1px solid #30363d;
+            border-radius: 4px;
+            color: #c9d1d9;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 12px;
+        }
+        
+        .expiry-btn:hover {
+            background: #2d3748;
+            border-color: #58a6ff;
+        }
+        
+        .expiry-btn.active {
+            background: #58a6ff;
+            border-color: #58a6ff;
+            color: #fff;
+        }
+        
+        .apply-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(90deg, #1f6feb, #58a6ff);
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 20px;
+        }
+        
+        .apply-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(31, 111, 235, 0.3);
+        }
+        
+        .results-table {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .table {
+            color: #c9d1d9;
+            margin: 0;
+        }
+        
+        .table thead th {
+            background-color: #1f2937;
+            color: #f0f6fc;
+            border-color: #30363d;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .table tbody tr:hover {
+            background-color: #1f2937;
+        }
+        
+        .table tbody td {
+            border-color: #30363d;
+            font-size: 13px;
+        }
+        
+        .positive {
+            color: #3fb950;
+        }
+        
+        .negative {
+            color: #f85149;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .spinner-border {
+            width: 2rem;
+            height: 2rem;
+            border-width: 0.2em;
+        }
+        
+        .current-price-display {
+            text-align: center;
+            padding: 10px;
+            background: #0d1117;
+            border-radius: 6px;
+            margin-bottom: 15px;
+        }
+        
+        .current-price-label {
+            font-size: 12px;
+            color: #8b949e;
+            text-transform: uppercase;
+        }
+        
+        .current-price-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #58a6ff;
+        }
+        
+        .nav-arrows {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .nav-arrow {
+            background: #1f2937;
+            border: 1px solid #30363d;
+            color: #c9d1d9;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .nav-arrow:hover {
+            background: #2d3748;
+            border-color: #58a6ff;
+        }
+        
+        .nav-arrow:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .stats-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            flex: 1;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 12px;
+            text-align: center;
+        }
+        
+        .stat-label {
+            font-size: 11px;
+            color: #8b949e;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+        
+        .stat-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: #58a6ff;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-filter"></i> Options Filter
+            </a>
+            <div class="ms-auto">
+                <button class="btn btn-sm btn-outline-light me-2" onclick="window.location.href='/'">
+                    <i class="fas fa-table"></i> Full Dashboard
+                </button>
+                <button class="btn btn-sm btn-outline-success" onclick="refreshData()">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <!-- Filter Window -->
+        <div class="filter-window">
+            <h4 class="text-center mb-4">
+                <i class="fas fa-search"></i> Options Filter
+            </h4>
+            
+            <!-- Step 1: Asset Selection -->
+            <div class="filter-section">
+                <div class="section-title">1. Select Asset</div>
+                <div class="asset-selector" id="assetSelector">
+                    <!-- Assets will be loaded here -->
+                </div>
+            </div>
+            
+            <!-- Current Price Display -->
+            <div class="current-price-display" id="priceDisplay" style="display: none;">
+                <div class="current-price-label">Current Price</div>
+                <div class="current-price-value" id="currentPriceValue">-</div>
+            </div>
+            
+            <!-- Step 2: Strike Selection -->
+            <div class="filter-section" id="strikeSection" style="display: none;">
+                <div class="section-title">2. Select Strike Price</div>
+                <div class="nav-arrows">
+                    <button class="nav-arrow" onclick="shiftStrikes(-5)">
+                        <i class="fas fa-chevron-left"></i> Lower
+                    </button>
+                    <div class="strike-selector" id="strikeSelector">
+                        <!-- Strikes will be loaded here -->
+                    </div>
+                    <button class="nav-arrow" onclick="shiftStrikes(5)">
+                        <i class="fas fa-chevron-right"></i> Higher
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Step 3: Expiry Selection -->
+            <div class="filter-section" id="expirySection" style="display: none;">
+                <div class="section-title">3. Select Expiry Date</div>
+                <div class="nav-arrows">
+                    <button class="nav-arrow" onclick="shiftExpiries(-5)">
+                        <i class="fas fa-chevron-left"></i> Earlier
+                    </button>
+                    <div class="expiry-selector" id="expirySelector">
+                        <!-- Expiries will be loaded here -->
+                    </div>
+                    <button class="nav-arrow" onclick="shiftExpiries(5)">
+                        <i class="fas fa-chevron-right"></i> Later
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Step 4: Type Selection -->
+            <div class="filter-section" id="typeSection" style="display: none;">
+                <div class="section-title">4. Select Option Type</div>
+                <div class="type-selector">
+                    <div class="type-btn calls" id="callsBtn" onclick="selectType('call')">
+                        <i class="fas fa-arrow-up"></i> CALLS
+                    </div>
+                    <div class="type-btn puts" id="putsBtn" onclick="selectType('put')">
+                        <i class="fas fa-arrow-down"></i> PUTS
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Apply Button -->
+            <button class="apply-btn" id="applyBtn" onclick="applyFilters()" style="display: none;">
+                <i class="fas fa-check-circle"></i> Show Results
+            </button>
+        </div>
+        
+        <!-- Stats Row -->
+        <div class="stats-row" id="statsRow" style="display: none;">
+            <div class="stat-card">
+                <div class="stat-label">Selected</div>
+                <div class="stat-value" id="selectedCount">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">ATM Strike</div>
+                <div class="stat-value" id="atmStrike">-</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total Volume</div>
+                <div class="stat-value" id="totalVolume">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Avg IV</div>
+                <div class="stat-value" id="avgIV">0%</div>
+            </div>
+        </div>
+        
+        <!-- Results Table -->
+        <div class="results-table" id="resultsSection" style="display: none;">
+            <div class="loading" id="loading">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2">Loading options data...</p>
+            </div>
+            
+            <table class="table table-dark table-striped table-hover" id="resultsTable" style="display: none;">
+                <thead>
+                    <tr>
+                        <th>Symbol</th>
+                        <th>Strike</th>
+                        <th>Expiry</th>
+                        <th>Type</th>
+                        <th>Last</th>
+                        <th>Mark</th>
+                        <th>Volume</th>
+                        <th>OI</th>
+                        <th>IV</th>
+                        <th>Delta</th>
+                        <th>Gamma</th>
+                        <th>Theta</th>
+                    </tr>
+                </thead>
+                <tbody id="resultsBody">
+                    <!-- Results will be loaded here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // State variables
+        let selectedAsset = null;
+        let selectedStrike = null;
+        let selectedExpiry = null;
+        let selectedType = null;
+        let currentPrice = 0;
+        let atmStrike = 0;
+        let allStrikes = [];
+        let currentStrikeIndex = 0;
+        let allExpiries = [];
+        let currentExpiryIndex = 0;
+        let allOptionsData = [];
+        
+        // Initialize
+        $(document).ready(function() {
+            loadAssets();
+        });
+        
+        // Load assets
+        function loadAssets() {
+            $.get('/api/assets', function(assets) {
+                const selector = $('#assetSelector');
+                selector.empty();
+                
+                Object.entries(assets).forEach(([symbol, info]) => {
+                    if (info.enabled) {
+                        const btn = $(`
+                            <div class="asset-btn" onclick="selectAsset('${symbol}')">
+                                <div>${symbol}</div>
+                                <div class="asset-price" id="price-${symbol}">Loading...</div>
+                            </div>
+                        `);
+                        selector.append(btn);
+                    }
+                });
+            });
+        }
+        
+        // Select asset
+        function selectAsset(asset) {
+            selectedAsset = asset;
+            $('.asset-btn').removeClass('active');
+            $(event.target).closest('.asset-btn').addClass('active');
+            
+            // Show loading
+            $('#priceDisplay').show();
+            $('#currentPriceValue').text('Loading...');
+            
+            // Load asset data
+            $.get(`/api/options/${asset}`, { expiry: 'all' }, function(data) {
+                if (data.length > 0) {
+                    // Update current price
+                    currentPrice = data[0].underlying;
+                    $('#currentPriceValue').text(`$${currentPrice.toFixed(2)}`);
+                    $(`#price-${asset}`).text(`$${currentPrice.toFixed(2)}`);
+                    
+                    // Find unique strikes
+                    allStrikes = [...new Set(data.map(o => parseFloat(o.strike)))].sort((a, b) => a - b);
+                    
+                    // Find ATM strike
+                    let minDiff = Infinity;
+                    allStrikes.forEach((strike, index) => {
+                        const diff = Math.abs(strike - currentPrice);
+                        if (diff < minDiff) {
+                            minDiff = diff;
+                            atmStrike = strike;
+                            currentStrikeIndex = index;
+                        }
+                    });
+                    
+                    $('#atmStrike').text(atmStrike);
+                    
+                    // Load strikes
+                    loadStrikes();
+                    
+                    // Load expiries
+                    loadExpiries(asset);
+                    
+                    // Show next sections
+                    $('#strikeSection').fadeIn();
+                    $('#expirySection').fadeIn();
+                    $('#typeSection').fadeIn();
+                    $('#applyBtn').fadeIn();
+                }
+            });
+        }
+        
+        // Load strikes (5 around current price)
+        function loadStrikes() {
+            const selector = $('#strikeSelector');
+            selector.empty();
+            
+            // Get 5 strikes centered around ATM
+            const start = Math.max(0, currentStrikeIndex - 2);
+            const end = Math.min(allStrikes.length, start + 5);
+            
+            for (let i = start; i < end; i++) {
+                const strike = allStrikes[i];
+                const isATM = Math.abs(strike - atmStrike) < 0.01;
+                const btn = $(`
+                    <div class="strike-btn ${isATM ? 'atm' : ''}" 
+                         onclick="selectStrike(${strike})">
+                        ${strike}
+                    </div>
+                `);
+                selector.append(btn);
+            }
+        }
+        
+        // Shift strikes left or right
+        function shiftStrikes(direction) {
+            currentStrikeIndex = Math.max(0, Math.min(allStrikes.length - 5, currentStrikeIndex + direction));
+            loadStrikes();
+        }
+        
+        // Select strike
+        function selectStrike(strike) {
+            selectedStrike = strike;
+            $('.strike-btn').removeClass('active');
+            $(event.target).addClass('active');
+        }
+        
+        // Load expiries
+        function loadExpiries(asset) {
+            $.get(`/api/expiries/${asset}`, function(expiries) {
+                allExpiries = expiries;
+                currentExpiryIndex = 0;
+                displayExpiries();
+            });
+        }
+        
+        // Display expiries (5 at a time)
+        function displayExpiries() {
+            const selector = $('#expirySelector');
+            selector.empty();
+            
+            // Get 5 expiries starting from current index
+            const start = currentExpiryIndex;
+            const end = Math.min(allExpiries.length, start + 5);
+            
+            for (let i = start; i < end; i++) {
+                const expiry = allExpiries[i];
+                const btn = $(`
+                    <div class="expiry-btn" onclick="selectExpiry('${expiry}')">
+                        ${formatExpiry(expiry)}
+                    </div>
+                `);
+                selector.append(btn);
+            }
+        }
+        
+        // Shift expiries left or right
+        function shiftExpiries(direction) {
+            currentExpiryIndex = Math.max(0, Math.min(allExpiries.length - 5, currentExpiryIndex + direction));
+            displayExpiries();
+        }
+        
+        // Format expiry
+        function formatExpiry(expiry) {
+            const match = expiry.match(/(\d+)([A-Z]{3})(\d{2})/);
+            if (match) {
+                return `${match[1]}-${match[2]}-${match[3]}`;
+            }
+            return expiry;
+        }
+        
+        // Select expiry
+        function selectExpiry(expiry) {
+            selectedExpiry = expiry;
+            $('.expiry-btn').removeClass('active');
+            $(event.target).addClass('active');
+        }
+        
+        // Select type
+        function selectType(type) {
+            selectedType = type;
+            $('.type-btn').removeClass('active');
+            
+            if (type === 'call') {
+                $('#callsBtn').addClass('active');
+            } else {
+                $('#putsBtn').addClass('active');
+            }
+        }
+        
+        // Apply filters and show results
+        function applyFilters() {
+            if (!selectedAsset) {
+                alert('Please select an asset');
+                return;
+            }
+            
+            $('#resultsSection').show();
+            $('#loading').show();
+            $('#resultsTable').hide();
+            $('#statsRow').show();
+            
+            // Get filtered data
+            $.get(`/api/options/${selectedAsset}`, {
+                expiry: selectedExpiry || 'all',
+                strike: selectedStrike || 'all',
+                type: selectedType || 'all'
+            }, function(data) {
+                displayResults(data);
+            });
+        }
+        
+        // Display results
+        function displayResults(data) {
+            const tbody = $('#resultsBody');
+            tbody.empty();
+            
+            // Calculate stats
+            let totalVolume = 0;
+            let totalIV = 0;
+            let count = 0;
+            
+            data.forEach(option => {
+                totalVolume += option.volume_24h || 0;
+                totalIV += option.iv || 0;
+                count++;
+                
+                const row = $(`
+                    <tr>
+                        <td>${option.symbol}</td>
+                        <td>${option.strike}</td>
+                        <td>${formatExpiry(option.expiry)}</td>
+                        <td>
+                            <span class="badge bg-${option.type === 'Call' ? 'success' : 'danger'}">
+                                ${option.type}
+                            </span>
+                        </td>
+                        <td>${option.last_price ? option.last_price.toFixed(2) : '-'}</td>
+                        <td>${option.mark_price ? option.mark_price.toFixed(2) : '-'}</td>
+                        <td>${formatVolume(option.volume_24h)}</td>
+                        <td>${formatNumber(option.open_interest)}</td>
+                        <td>${option.iv ? (option.iv * 100).toFixed(1) + '%' : '-'}</td>
+                        <td class="${option.delta > 0 ? 'positive' : 'negative'}">
+                            ${option.delta ? option.delta.toFixed(4) : '-'}
+                        </td>
+                        <td>${option.gamma ? option.gamma.toFixed(6) : '-'}</td>
+                        <td class="negative">
+                            ${option.theta ? option.theta.toFixed(2) : '-'}
+                        </td>
+                    </tr>
+                `);
+                tbody.append(row);
+            });
+            
+            // Update stats
+            $('#selectedCount').text(count);
+            $('#totalVolume').text(formatVolume(totalVolume));
+            $('#avgIV').text(count > 0 ? ((totalIV / count) * 100).toFixed(1) + '%' : '0%');
+            
+            $('#loading').hide();
+            $('#resultsTable').show();
+        }
+        
+        // Format volume
+        function formatVolume(vol) {
+            if (!vol) return '0';
+            if (vol > 1000000) return (vol / 1000000).toFixed(1) + 'M';
+            if (vol > 1000) return (vol / 1000).toFixed(1) + 'K';
+            return vol.toFixed(0);
+        }
+        
+        // Format number
+        function formatNumber(num) {
+            if (!num) return '0';
+            if (num > 1000000) return (num / 1000000).toFixed(1) + 'M';
+            if (num > 1000) return (num / 1000).toFixed(1) + 'K';
+            return num.toFixed(0);
+        }
+        
+        // Refresh data
+        function refreshData() {
+            if (selectedAsset) {
+                selectAsset(selectedAsset);
+            }
+        }
+    </script>
+</body>
+</html>
