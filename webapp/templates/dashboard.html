@@ -82,6 +82,7 @@
             .input-group-text {
                 font-size: 12px;
                 padding: 0.375rem 0.5rem;
+                color: #ffffff !important;
             }
         }
         
@@ -132,15 +133,26 @@
             background-color: #161b22;
             border: 1px solid #30363d;
             border-radius: 8px;
+            color: #ffffff;
+        }
+        
+        .card-body {
+            color: #ffffff;
+        }
+        
+        .input-group-text {
+            background-color: #0d1117;
+            border-color: #30363d;
+            color: #ffffff;
         }
         
         .table {
-            color: #c9d1d9;
+            color: #ffffff;
         }
         
         .table thead th {
             background-color: #1f2937;
-            color: #f0f6fc;
+            color: #ffffff;
             border-color: #30363d;
             font-weight: 600;
             position: sticky;
@@ -151,10 +163,15 @@
         .table tbody tr {
             border-color: #30363d;
             transition: background-color 0.2s;
+            color: #ffffff;
         }
         
         .table tbody tr:hover {
             background-color: #1f2937;
+        }
+        
+        .table tbody td {
+            color: #ffffff;
         }
         
         .btn-primary {
@@ -197,6 +214,11 @@
             border-radius: 6px;
             padding: 12px;
             margin-bottom: 10px;
+        }
+        
+        .stats-card .text-muted {
+            color: #ffffff !important;
+            opacity: 0.7;
         }
         
         .stats-value {
@@ -260,14 +282,66 @@
         .form-control, .form-select {
             background-color: #0d1117;
             border-color: #30363d;
-            color: #c9d1d9;
+            color: #ffffff;
         }
         
         .form-control:focus, .form-select:focus {
             background-color: #0d1117;
             border-color: #1f6feb;
-            color: #c9d1d9;
+            color: #ffffff;
             box-shadow: 0 0 0 3px rgba(31, 111, 235, 0.1);
+        }
+        
+        .form-label {
+            color: #ffffff;
+        }
+        
+        .badge {
+            font-weight: 500;
+        }
+        
+        /* Column visibility controls */
+        .column-controls {
+            background-color: #1f2937;
+            border: 1px solid #30363d;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .column-checkbox {
+            display: inline-block;
+            margin-right: 20px;
+            margin-bottom: 10px;
+            color: #ffffff;
+        }
+        
+        .column-checkbox input {
+            margin-right: 8px;
+            cursor: pointer;
+        }
+        
+        .column-checkbox label {
+            cursor: pointer;
+            color: #ffffff;
+            font-size: 14px;
+        }
+        
+        .column-controls h6 {
+            color: #ffffff;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        
+        .preset-buttons {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #30363d;
+        }
+        
+        .preset-buttons button {
+            margin-right: 5px;
+            margin-bottom: 5px;
         }
     </style>
 </head>
@@ -331,6 +405,85 @@
             </div>
         </div>
 
+        <!-- Column Visibility Controls -->
+        <div class="column-controls" id="columnControls">
+            <h6>
+                <i class="fas fa-eye"></i> Column Visibility
+                <button class="btn btn-sm btn-outline-primary float-end" onclick="toggleColumnPanel()">
+                    <i class="fas fa-chevron-up" id="toggleIcon"></i>
+                </button>
+            </h6>
+            <div id="columnPanel">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="column-checkbox">
+                            <input type="checkbox" id="col-symbol" checked onchange="toggleColumn(0, 'symbol')">
+                            <label for="col-symbol">Symbol</label>
+                        </div>
+                        <div class="column-checkbox">
+                            <input type="checkbox" id="col-type" checked onchange="toggleColumn(1, 'type')">
+                            <label for="col-type">Type</label>
+                        </div>
+                        <div class="column-checkbox">
+                            <input type="checkbox" id="col-strike" checked onchange="toggleColumn(2, 'strike')">
+                            <label for="col-strike">Strike</label>
+                        </div>
+                        <div class="column-checkbox">
+                            <input type="checkbox" id="col-expiry" checked onchange="toggleColumn(3, 'expiry')">
+                            <label for="col-expiry">Expiry</label>
+                        </div>
+                        <div class="column-checkbox">
+                            <input type="checkbox" id="col-last" checked onchange="toggleColumn(4, 'last')">
+                            <label for="col-last">Last Price</label>
+                        </div>
+                        <div class="column-checkbox">
+                            <input type="checkbox" id="col-mark" checked onchange="toggleColumn(5, 'mark')">
+                            <label for="col-mark">Mark Price</label>
+                        </div>
+                        <div class="column-checkbox">
+                            <input type="checkbox" id="col-volume" checked onchange="toggleColumn(6, 'volume')">
+                            <label for="col-volume">Volume</label>
+                        </div>
+                        <div class="column-checkbox">
+                            <input type="checkbox" id="col-oi" checked onchange="toggleColumn(7, 'oi')">
+                            <label for="col-oi">Open Interest</label>
+                        </div>
+                        <div class="column-checkbox">
+                            <input type="checkbox" id="col-delta" checked onchange="toggleColumn(8, 'delta')">
+                            <label for="col-delta">Delta</label>
+                        </div>
+                        <div class="column-checkbox">
+                            <input type="checkbox" id="col-gamma" onchange="toggleColumn(9, 'gamma')">
+                            <label for="col-gamma">Gamma</label>
+                        </div>
+                        <div class="column-checkbox">
+                            <input type="checkbox" id="col-theta" onchange="toggleColumn(10, 'theta')">
+                            <label for="col-theta">Theta</label>
+                        </div>
+                        <div class="column-checkbox">
+                            <input type="checkbox" id="col-vega" onchange="toggleColumn(11, 'vega')">
+                            <label for="col-vega">Vega</label>
+                        </div>
+                        <div class="column-checkbox">
+                            <input type="checkbox" id="col-iv" checked onchange="toggleColumn(12, 'iv')">
+                            <label for="col-iv">IV</label>
+                        </div>
+                        <div class="column-checkbox">
+                            <input type="checkbox" id="col-underlying" onchange="toggleColumn(13, 'underlying')">
+                            <label for="col-underlying">Underlying</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="preset-buttons">
+                    <button class="btn btn-sm btn-secondary" onclick="applyPreset('basic')">Basic View</button>
+                    <button class="btn btn-sm btn-secondary" onclick="applyPreset('trader')">Trader View</button>
+                    <button class="btn btn-sm btn-secondary" onclick="applyPreset('greeks')">Greeks Focus</button>
+                    <button class="btn btn-sm btn-secondary" onclick="applyPreset('all')">Show All</button>
+                    <button class="btn btn-sm btn-warning" onclick="resetColumns()">Reset Default</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Asset Tabs -->
         <ul class="nav nav-tabs" id="assetTabs" role="tablist">
             {% for symbol, info in assets.items() %}
@@ -379,8 +532,8 @@
                     <div class="col-12 col-md-6">
                         <label class="form-label">Market Info</label>
                         <div class="input-group input-group-sm">
-                            <span class="input-group-text bg-dark text-light" id="currentPrice">Loading...</span>
-                            <span class="input-group-text bg-dark text-light" id="atmStrike">ATM: -</span>
+                            <span class="input-group-text bg-dark text-white" id="currentPrice">Loading...</span>
+                            <span class="input-group-text bg-dark text-white" id="atmStrike">ATM: -</span>
                         </div>
                     </div>
                 </div>
@@ -514,9 +667,12 @@
         let allOptionsData = [];
         let currentPrice = 0;
         let atmStrike = 0;
+        let columnVisibility = {};
 
         // Initialize
         $(document).ready(function() {
+            // Load column preferences from localStorage
+            loadColumnPreferences();
             // Initialize DataTable
             optionsTable = $('#optionsTable').DataTable({
                 pageLength: 50,
@@ -682,6 +838,9 @@
             optionsTable.clear();
             optionsTable.rows.add(filtered);
             optionsTable.draw();
+            
+            // Apply column visibility after drawing
+            applyColumnVisibility();
             
             // Update displayed count
             $('#displayedCount').text(filtered.length);
@@ -851,6 +1010,134 @@
                         alert(xhr.responseJSON.error || 'Failed to remove asset');
                     }
                 });
+            }
+        }
+        
+        // Column Visibility Functions
+        function loadColumnPreferences() {
+            const saved = localStorage.getItem('columnVisibility');
+            if (saved) {
+                columnVisibility = JSON.parse(saved);
+                // Apply saved preferences to checkboxes
+                Object.keys(columnVisibility).forEach(key => {
+                    const checkbox = document.getElementById(`col-${key}`);
+                    if (checkbox) {
+                        checkbox.checked = columnVisibility[key];
+                    }
+                });
+                // Apply to DataTable columns
+                applyColumnVisibility();
+            } else {
+                // Set default visibility
+                columnVisibility = {
+                    symbol: true,
+                    type: true,
+                    strike: true,
+                    expiry: true,
+                    last: true,
+                    mark: true,
+                    volume: true,
+                    oi: true,
+                    delta: true,
+                    gamma: false,
+                    theta: false,
+                    vega: false,
+                    iv: true,
+                    underlying: false
+                };
+            }
+        }
+        
+        function toggleColumn(index, name) {
+            const isVisible = document.getElementById(`col-${name}`).checked;
+            columnVisibility[name] = isVisible;
+            
+            // Save to localStorage
+            localStorage.setItem('columnVisibility', JSON.stringify(columnVisibility));
+            
+            // Apply to DataTable
+            if (optionsTable) {
+                optionsTable.column(index).visible(isVisible);
+            }
+        }
+        
+        function applyColumnVisibility() {
+            if (optionsTable) {
+                const columnMap = {
+                    symbol: 0, type: 1, strike: 2, expiry: 3,
+                    last: 4, mark: 5, volume: 6, oi: 7,
+                    delta: 8, gamma: 9, theta: 10, vega: 11,
+                    iv: 12, underlying: 13
+                };
+                
+                Object.keys(columnVisibility).forEach(key => {
+                    const index = columnMap[key];
+                    if (index !== undefined) {
+                        optionsTable.column(index).visible(columnVisibility[key]);
+                    }
+                });
+            }
+        }
+        
+        function applyPreset(preset) {
+            const presets = {
+                basic: {
+                    symbol: true, type: true, strike: true, expiry: true,
+                    last: true, mark: true, volume: true, oi: false,
+                    delta: false, gamma: false, theta: false, vega: false,
+                    iv: false, underlying: false
+                },
+                trader: {
+                    symbol: true, type: true, strike: true, expiry: true,
+                    last: true, mark: true, volume: true, oi: true,
+                    delta: true, gamma: false, theta: false, vega: false,
+                    iv: true, underlying: true
+                },
+                greeks: {
+                    symbol: true, type: true, strike: true, expiry: true,
+                    last: false, mark: true, volume: false, oi: false,
+                    delta: true, gamma: true, theta: true, vega: true,
+                    iv: true, underlying: false
+                },
+                all: {
+                    symbol: true, type: true, strike: true, expiry: true,
+                    last: true, mark: true, volume: true, oi: true,
+                    delta: true, gamma: true, theta: true, vega: true,
+                    iv: true, underlying: true
+                }
+            };
+            
+            if (presets[preset]) {
+                columnVisibility = presets[preset];
+                
+                // Update checkboxes
+                Object.keys(columnVisibility).forEach(key => {
+                    const checkbox = document.getElementById(`col-${key}`);
+                    if (checkbox) {
+                        checkbox.checked = columnVisibility[key];
+                    }
+                });
+                
+                // Save and apply
+                localStorage.setItem('columnVisibility', JSON.stringify(columnVisibility));
+                applyColumnVisibility();
+            }
+        }
+        
+        function resetColumns() {
+            applyPreset('trader');
+        }
+        
+        function toggleColumnPanel() {
+            const panel = document.getElementById('columnPanel');
+            const icon = document.getElementById('toggleIcon');
+            
+            if (panel.style.display === 'none') {
+                panel.style.display = 'block';
+                icon.className = 'fas fa-chevron-up';
+            } else {
+                panel.style.display = 'none';
+                icon.className = 'fas fa-chevron-down';
             }
         }
     </script>
