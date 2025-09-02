@@ -390,6 +390,17 @@
         <!-- Data Table -->
         <div class="card mt-3">
             <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div>
+                        <span class="badge bg-info">Total: <span id="totalOptionsCount">0</span> options</span>
+                        <span class="badge bg-success ms-2">Displayed: <span id="displayedCount">0</span></span>
+                    </div>
+                    <div>
+                        <button class="btn btn-sm btn-outline-primary" onclick="refreshData()">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                    </div>
+                </div>
                 <div class="loading text-center">
                     <div class="spinner-border text-primary" role="status">
                         <span class="visually-hidden">Loading...</span>
@@ -508,7 +519,8 @@
         $(document).ready(function() {
             // Initialize DataTable
             optionsTable = $('#optionsTable').DataTable({
-                pageLength: 25,
+                pageLength: 50,
+                lengthMenu: [[10, 25, 50, 100, 250, 500, -1], [10, 25, 50, 100, 250, 500, "All"]],
                 order: [[6, 'desc']], // Sort by volume
                 columns: [
                     { data: 'symbol' },
@@ -609,6 +621,9 @@
             }, function(data) {
                 allOptionsData = data;
                 
+                // Update counts
+                $('#totalOptionsCount').text(data.length);
+                
                 // Update current price and ATM
                 if (data.length > 0) {
                     currentPrice = data[0].underlying;
@@ -667,6 +682,9 @@
             optionsTable.clear();
             optionsTable.rows.add(filtered);
             optionsTable.draw();
+            
+            // Update displayed count
+            $('#displayedCount').text(filtered.length);
         }
 
         // Auto refresh

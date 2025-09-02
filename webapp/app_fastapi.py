@@ -10,6 +10,7 @@ import json
 import os
 import asyncio
 from datetime import datetime
+from pathlib import Path
 from typing import Dict, List, Optional
 from fastapi import FastAPI, Request, Response, HTTPException
 from fastapi.responses import HTMLResponse, StreamingResponse
@@ -53,10 +54,33 @@ class AssetManager:
     """Manages dynamic assets with persistence"""
     
     ASSETS_KEY = "config:assets"
-    DEFAULT_ASSETS = {
-        "BTC": {"name": "Bitcoin", "enabled": True, "order": 1},
-        "SOL": {"name": "Solana", "enabled": True, "order": 2}
-    }
+    
+    @classmethod
+    def get_default_assets(cls):
+        """Get default assets from environment or use hardcoded defaults"""
+        assets_str = os.getenv('OPTION_ASSETS', 'BTC,ETH,SOL')
+        assets_list = [a.strip() for a in assets_str.split(',')]
+        
+        default_names = {
+            "BTC": "Bitcoin",
+            "ETH": "Ethereum", 
+            "SOL": "Solana",
+            "MATIC": "Polygon",
+            "ARB": "Arbitrum",
+            "OP": "Optimism"
+        }
+        
+        assets = {}
+        for i, asset in enumerate(assets_list, 1):
+            assets[asset] = {
+                "name": default_names.get(asset, asset),
+                "enabled": True,
+                "order": i
+            }
+        
+        return assets
+    
+    DEFAULT_ASSETS = property(lambda self: self.get_default_assets())
     
     @classmethod
     async def get_assets(cls) -> Dict:
@@ -66,9 +90,10 @@ class AssetManager:
         if assets_json:
             return json.loads(assets_json)
         else:
-            # Initialize with defaults
-            await cls.save_assets(cls.DEFAULT_ASSETS)
-            return cls.DEFAULT_ASSETS
+            # Initialize with defaults from environment
+            default_assets = cls.get_default_assets()
+            await cls.save_assets(default_assets)
+            return default_assets
     
     @classmethod
     async def save_assets(cls, assets: Dict) -> bool:
@@ -196,7 +221,8 @@ class AssetManager:
     async def remove_asset(cls, symbol: str) -> bool:
         """Remove asset (only if not default)"""
         assets = await cls.get_assets()
-        if symbol in assets and symbol not in cls.DEFAULT_ASSETS:
+        default_assets = cls.get_default_assets()
+        if symbol in assets and symbol not in default_assets:
             del assets[symbol]
             await cls.save_assets(assets)
             return True
@@ -217,7 +243,8 @@ class OptionsDataProvider:
         keys = await client.keys(pattern)
         
         options_data = []
-        for key in keys[:500]:  # Limit for performance
+        # Process all keys, not just first 500
+        for key in keys:
             try:
                 # Get data from Redis
                 data = await client.hgetall(key)
@@ -227,6 +254,16 @@ class OptionsDataProvider:
                 # Parse symbol
                 symbol = key.replace("option:", "")
                 parts = symbol.split("-")
+                
+                # Standardize expiry format if present
+                if len(parts) > 1:
+                    expiry_raw = parts[1]
+                    # Standardize to 2-digit day format
+                    import re
+                    match = re.match(r'(\d{1,2})([A-Z]{3})(\d{2})', expiry_raw)
+                    if match:
+                        day, month, year = match.groups()
+                        parts[1] = f"{int(day):02d}{month}{year}"
                 
                 # Filter by expiry if specified
                 if expiry and expiry != "all":
@@ -248,7 +285,7 @@ class OptionsDataProvider:
                 # Format data for display
                 options_data.append({
                     "symbol": symbol,
-                    "expiry": parts[1] if len(parts) > 1 else "N/A",
+                    "expiry": parts[1] if len(parts) > 1 else "N/A",  # Already standardized above
                     "strike": parts[2] if len(parts) > 2 else "N/A",
                     "type": "Call" if "-C" in symbol else "Put",
                     "last_price": float(data.get("last_price", 0) or 0),
@@ -274,10 +311,10 @@ class OptionsDataProvider:
     @staticmethod
     async def get_strikes(asset: str, expiry: Optional[str] = None) -> List[str]:
         """Get unique strike prices for an asset and expiry"""
+        import re
+        
         client = await get_redis()
         pattern = f"option:{asset}-*"
-        if expiry and expiry != "all":
-            pattern = f"option:{asset}-{expiry}-*"
         
         keys = await client.keys(pattern)
         
@@ -285,6 +322,21 @@ class OptionsDataProvider:
         for key in keys:
             symbol = key.replace("option:", "")
             parts = symbol.split("-")
+            
+            # Standardize expiry in parts for filtering
+            if len(parts) > 1:
+                expiry_raw = parts[1]
+                match = re.match(r'(\d{1,2})([A-Z]{3})(\d{2})', expiry_raw)
+                if match:
+                    day, month, year = match.groups()
+                    parts[1] = f"{int(day):02d}{month}{year}"
+            
+            # Filter by expiry if specified
+            if expiry and expiry != "all":
+                if len(parts) > 1 and parts[1] != expiry:
+                    continue
+            
+            # Add strike price
             if len(parts) > 2:
                 strikes.add(parts[2])
         
@@ -294,6 +346,9 @@ class OptionsDataProvider:
     @staticmethod
     async def get_expiries(asset: str) -> List[str]:
         """Get unique expiry dates for an asset"""
+        from datetime import datetime
+        import re
+        
         client = await get_redis()
         pattern = f"option:{asset}-*"
         keys = await client.keys(pattern)
@@ -303,9 +358,30 @@ class OptionsDataProvider:
             symbol = key.replace("option:", "")
             parts = symbol.split("-")
             if len(parts) > 1:
-                expiries.add(parts[1])
+                expiry = parts[1]
+                # Standardize format: ensure 2-digit day (e.g., 3SEP25 -> 03SEP25)
+                match = re.match(r'(\d{1,2})([A-Z]{3})(\d{2})', expiry)
+                if match:
+                    day, month, year = match.groups()
+                    standardized = f"{int(day):02d}{month}{year}"
+                    expiries.add(standardized)
+                else:
+                    expiries.add(expiry)
         
-        return sorted(list(expiries))
+        # Sort by actual date
+        def parse_expiry(exp):
+            try:
+                match = re.match(r'(\d{2})([A-Z]{3})(\d{2})', exp)
+                if match:
+                    day, month, year = match.groups()
+                    month_map = {'JAN': 1, 'FEB': 2, 'MAR': 3, 'APR': 4, 'MAY': 5, 'JUN': 6,
+                                'JUL': 7, 'AUG': 8, 'SEP': 9, 'OCT': 10, 'NOV': 11, 'DEC': 12}
+                    return datetime(2000 + int(year), month_map.get(month, 1), int(day))
+            except:
+                pass
+            return datetime(2099, 12, 31)  # Put invalid dates at end
+        
+        return sorted(list(expiries), key=parse_expiry)
     
     @staticmethod
     async def get_stats() -> Dict:
@@ -419,9 +495,19 @@ async def remove_asset(symbol: str):
     raise HTTPException(status_code=400, detail="Cannot remove default asset")
 
 @app.get("/api/options/{asset}")
-async def get_options(asset: str, expiry: str = "all", type: str = "all", strike: str = "all"):
-    """Get options data for specific asset"""
+async def get_options(asset: str, expiry: str = "all", type: str = "all", strike: str = "all", 
+                      limit: int = None, offset: int = 0):
+    """Get options data for specific asset with optional pagination"""
     data = await OptionsDataProvider.get_options_data(asset, expiry, type, strike)
+    
+    # Apply pagination if limit is specified
+    if limit:
+        return {
+            "total": len(data),
+            "limit": limit,
+            "offset": offset,
+            "data": data[offset:offset + limit]
+        }
     return data
 
 @app.get("/api/strikes/{asset}")
@@ -441,6 +527,57 @@ async def get_stats():
     """Get system statistics"""
     stats = await OptionsDataProvider.get_stats()
     return stats
+
+@app.get("/api/summary/{asset}")
+async def get_summary(asset: str):
+    """Get summary statistics for an asset"""
+    import re
+    from datetime import datetime
+    
+    client = await get_redis()
+    pattern = f"option:{asset}-*"
+    keys = await client.keys(pattern)
+    
+    # Count by type
+    calls = sum(1 for k in keys if k.endswith("-C"))
+    puts = sum(1 for k in keys if k.endswith("-P"))
+    
+    # Get unique expiries and standardize them
+    expiries = set()
+    for key in keys:
+        parts = key.split("-")
+        if len(parts) > 1:
+            expiry_raw = parts[1]
+            # Standardize to 2-digit day format
+            match = re.match(r'(\d{1,2})([A-Z]{3})(\d{2})', expiry_raw)
+            if match:
+                day, month, year = match.groups()
+                standardized = f"{int(day):02d}{month}{year}"
+                expiries.add(standardized)
+            else:
+                expiries.add(expiry_raw)
+    
+    # Sort by actual date
+    def parse_expiry(exp):
+        try:
+            match = re.match(r'(\d{2})([A-Z]{3})(\d{2})', exp)
+            if match:
+                day, month, year = match.groups()
+                month_map = {'JAN': 1, 'FEB': 2, 'MAR': 3, 'APR': 4, 'MAY': 5, 'JUN': 6,
+                            'JUL': 7, 'AUG': 8, 'SEP': 9, 'OCT': 10, 'NOV': 11, 'DEC': 12}
+                return datetime(2000 + int(year), month_map.get(month, 1), int(day))
+        except:
+            pass
+        return datetime(2099, 12, 31)
+    
+    return {
+        "asset": asset,
+        "total_options": len(keys),
+        "calls": calls,
+        "puts": puts,
+        "expiries": sorted(list(expiries), key=parse_expiry),
+        "expiry_count": len(expiries)
+    }
 
 @app.get("/api/stream")
 async def stream():
