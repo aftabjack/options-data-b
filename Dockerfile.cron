@@ -16,6 +16,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY scripts/symbol_updater.py .
 COPY telegram_notifier.py .
 COPY data_access.py .
+COPY config_loader.py .
+COPY config.yaml .
 
 # Setup cron job for 08:05 UTC daily
 RUN echo "5 8 * * * cd /app && /usr/local/bin/python /app/symbol_updater.py >> /app/logs/cron.log 2>&1" > /etc/cron.d/symbol-updater

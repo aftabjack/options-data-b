@@ -15,6 +15,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY options_tracker_production.py .
 COPY telegram_notifier.py .
 COPY data_access.py .
+COPY config_loader.py .
+COPY config.yaml .
 
 # Create logs directory
 RUN mkdir -p logs

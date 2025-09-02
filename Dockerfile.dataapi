@@ -14,6 +14,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application files
 COPY data_access.py .
 COPY data_api.py .
+COPY config_loader.py .
+COPY config.yaml .
 
 # Create non-root user
 RUN useradd -m -u 1000 api && chown -R api:api /app
