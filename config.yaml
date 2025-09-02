@@ -1,0 +1,87 @@
+# Bybit Options Production Configuration
+# Customize your deployment settings here
+
+# Service Endpoints Configuration
+services:
+  webapp:
+    enabled: true
+    host: "0.0.0.0"
+    port: 5001
+    external_url: "http://localhost:5001"
+    description: "Web Dashboard Interface"
+    
+  api:
+    enabled: true
+    host: "0.0.0.0"
+    port: 8000
+    external_url: "http://localhost:8000"
+    description: "REST API Server"
+    docs_url: "http://localhost:8000/docs"
+    
+  health:
+    enabled: true
+    port: 8080
+    external_url: "http://localhost:8080/health"
+    description: "Health Check Endpoint"
+
+# Redis Configuration
+redis:
+  host: "redis"  # Use "localhost" for non-Docker
+  port: 6379
+  db: 0
+  password: ""  # Set if using Redis AUTH
+  max_connections: 50
+
+# WebSocket Configuration
+websocket:
+  ping_interval: 45
+  ping_timeout: 15
+  reconnect_delay: 10
+  max_reconnect_attempts: 10
+  batch_size: 200
+  batch_timeout: 2.0
+
+# Tracking Configuration
+tracker:
+  assets:
+    - "BTC"
+    - "ETH"
+    - "SOL"
+  clear_on_start: true
+  symbol_cache_ttl: 86400  # 24 hours
+  stats_interval: 30  # seconds
+
+# Telegram Notifications (Optional)
+telegram:
+  enabled: false
+  api_id: ""
+  api_hash: ""
+  notification_channel: ""
+  throttle_seconds: 60
+  max_errors_before_critical: 5
+
+# Performance Settings
+performance:
+  memory_limit: "512m"
+  cpu_limit: "1.5"
+  log_level: "INFO"
+  
+# Display Settings
+display:
+  show_banner: true
+  show_urls: true
+  colors_enabled: true
+  refresh_interval: 5000  # milliseconds for web dashboard
+
+# Custom Domains (for production deployment)
+domains:
+  webapp: ""  # e.g., "dashboard.yourcompany.com"
+  api: ""     # e.g., "api.yourcompany.com"
+  
+# Docker Settings
+docker:
+  network_name: "bybit-network"
+  restart_policy: "unless-stopped"
+  
+# Environment
+environment: "production"  # production, staging, development
