@@ -58,7 +58,7 @@ class Config:
     WS_PING_TIMEOUT = int(os.getenv('WS_PING_TIMEOUT', '15'))   # Increased from 10
     WS_RECONNECT_DELAY = int(os.getenv('WS_RECONNECT_DELAY', '10'))  # Increased from 5
     WS_MAX_RECONNECT_ATTEMPTS = int(os.getenv('WS_MAX_RECONNECT_ATTEMPTS', '10'))
-    WS_SUBSCRIPTION_CHUNK_SIZE = int(os.getenv('WS_SUBSCRIPTION_CHUNK_SIZE', '100'))  # Increased from 50
+    WS_SUBSCRIPTION_CHUNK_SIZE = int(os.getenv('WS_SUBSCRIPTION_CHUNK_SIZE', '10'))  # Reduced to prevent connection drops
     WS_SUBSCRIPTION_DELAY = float(os.getenv('WS_SUBSCRIPTION_DELAY', '0.5'))  # Increased from 0.2
     
     # Cache Settings

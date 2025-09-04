@@ -895,8 +895,31 @@
                 }
             });
             
-            // Sort expiries
-            const expiries = Array.from(expirySet).sort();
+            // Sort expiries chronologically
+            const expiries = Array.from(expirySet).sort((a, b) => {
+                // Parse dates: format is DDMMMYY (e.g., 05SEP25)
+                const monthMap = {
+                    'JAN': 1, 'FEB': 2, 'MAR': 3, 'APR': 4, 'MAY': 5, 'JUN': 6,
+                    'JUL': 7, 'AUG': 8, 'SEP': 9, 'OCT': 10, 'NOV': 11, 'DEC': 12
+                };
+                
+                // Extract components from format DDMMMYY or 0DMMMYY
+                const parseExpiry = (exp) => {
+                    const match = exp.match(/^(\d{1,2})([A-Z]{3})(\d{2})$/);
+                    if (!match) return new Date(2099, 11, 31); // Invalid dates at end
+                    
+                    const day = parseInt(match[1]);
+                    const month = monthMap[match[2]] || 12;
+                    const year = 2000 + parseInt(match[3]);
+                    
+                    return new Date(year, month - 1, day);
+                };
+                
+                const dateA = parseExpiry(a);
+                const dateB = parseExpiry(b);
+                
+                return dateA - dateB;
+            });
             
             const select = $('#expiryFilter');
             select.html(`<option value="all">All Expiries</option>`);

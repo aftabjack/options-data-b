@@ -251,9 +251,10 @@ class OptionsDataProvider:
                 if not data:
                     continue
                 
-                # Parse symbol
+                # Parse symbol (remove -USDT suffix if present)
                 symbol = key.replace("option:", "")
-                parts = symbol.split("-")
+                symbol_clean = symbol.replace("-USDT", "")
+                parts = symbol_clean.split("-")
                 
                 # Standardize expiry format if present
                 if len(parts) > 1:
@@ -277,9 +278,9 @@ class OptionsDataProvider:
                 
                 # Filter by option type if specified
                 if option_type and option_type != "all":
-                    if option_type == "call" and not symbol.endswith("-C"):
+                    if option_type == "call" and not ("-C-" in symbol or symbol.endswith("-C")):
                         continue
-                    if option_type == "put" and not symbol.endswith("-P"):
+                    if option_type == "put" and not ("-P-" in symbol or symbol.endswith("-P")):
                         continue
                 
                 # Format data for display
@@ -287,7 +288,7 @@ class OptionsDataProvider:
                     "symbol": symbol,
                     "expiry": parts[1] if len(parts) > 1 else "N/A",  # Already standardized above
                     "strike": parts[2] if len(parts) > 2 else "N/A",
-                    "type": "Call" if "-C" in symbol else "Put",
+                    "type": "Call" if ("-C-" in symbol or symbol.endswith("-C")) else "Put",
                     "last_price": float(data.get("last_price", 0) or 0),
                     "mark_price": float(data.get("mark_price", 0) or 0),
                     "volume_24h": float(data.get("volume_24h", 0) or 0),
@@ -321,7 +322,8 @@ class OptionsDataProvider:
         strikes = set()
         for key in keys:
             symbol = key.replace("option:", "")
-            parts = symbol.split("-")
+            symbol_clean = symbol.replace("-USDT", "")
+            parts = symbol_clean.split("-")
             
             # Standardize expiry in parts for filtering
             if len(parts) > 1:
@@ -356,7 +358,8 @@ class OptionsDataProvider:
         expiries = set()
         for key in keys:
             symbol = key.replace("option:", "")
-            parts = symbol.split("-")
+            symbol_clean = symbol.replace("-USDT", "")
+            parts = symbol_clean.split("-")
             if len(parts) > 1:
                 expiry = parts[1]
                 # Standardize format: ensure 2-digit day (e.g., 3SEP25 -> 03SEP25)
@@ -541,14 +544,15 @@ async def get_summary(asset: str):
     pattern = f"option:{asset}-*"
     keys = await client.keys(pattern)
     
-    # Count by type
-    calls = sum(1 for k in keys if k.endswith("-C"))
-    puts = sum(1 for k in keys if k.endswith("-P"))
+    # Count by type (handles both -C and -C-USDT formats)
+    calls = sum(1 for k in keys if "-C-" in k or k.endswith("-C"))
+    puts = sum(1 for k in keys if "-P-" in k or k.endswith("-P"))
     
     # Get unique expiries and standardize them
     expiries = set()
     for key in keys:
-        parts = key.split("-")
+        key_clean = key.replace("-USDT", "")
+        parts = key_clean.split("-")
         if len(parts) > 1:
             expiry_raw = parts[1]
             # Standardize to 2-digit day format
