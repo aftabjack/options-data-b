@@ -389,11 +389,14 @@ class OptionsDataProvider:
         try:
             client = await get_redis()
             stats = await client.hgetall("stats:global")
-            db_size = await client.dbsize()
             info = await client.info('memory')
             
+            # Count actual option keys
+            option_keys = await client.keys("option:*")
+            total_options = len(option_keys)
+            
             return {
-                "total_symbols": db_size // 2,  # Rough estimate
+                "total_symbols": total_options,  # Actual count of options
                 "messages_processed": int(stats.get("messages", 0)),
                 "last_update": stats.get("last_update", "N/A"),
                 "redis_memory": info.get('used_memory_human', 'N/A')

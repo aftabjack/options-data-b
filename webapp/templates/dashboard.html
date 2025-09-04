@@ -887,24 +887,24 @@
         function loadExpiriesAndFilter() {
             const asset = currentAsset;
             
-            // Count options per expiry
-            const expiryCount = {};
+            // Get unique expiries from the data (no counting needed)
+            const expirySet = new Set();
             allOptionsData.forEach(option => {
-                expiryCount[option.expiry] = (expiryCount[option.expiry] || 0) + 1;
+                if (option.expiry) {
+                    expirySet.add(option.expiry);
+                }
             });
             
-            // Get unique expiries and sort them
-            const expiries = Object.keys(expiryCount).sort();
+            // Sort expiries
+            const expiries = Array.from(expirySet).sort();
             
             const select = $('#expiryFilter');
-            const totalCount = allOptionsData.length;
-            select.html(`<option value="all">All Expiries (${totalCount})</option>`);
+            select.html(`<option value="all">All Expiries</option>`);
             
             expiries.forEach((exp) => {
-                // Format date nicely and show count
+                // Format date nicely without count
                 const dateStr = exp.replace(/^(\d{2})(\w{3})(\d{2})$/, '$1-$2-$3');
-                const count = expiryCount[exp];
-                select.append(`<option value="${exp}">${dateStr} (${count})</option>`);
+                select.append(`<option value="${exp}">${dateStr}</option>`);
             });
             
             // Default to "All Expiries" to show all data

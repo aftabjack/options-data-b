@@ -219,17 +219,6 @@ class OptionsDataAccess:
         
         return sorted(recent, key=lambda x: x.get('timestamp', 0), reverse=True)
     
-    def monitor_option(self, symbol: str) -> Dict:
-        """Get real-time monitoring data for a specific option"""
-        data = self.get_option(symbol)
-        if not data:
-            return {}
-        
-        # Add calculated fields
-        data['spread'] = data.get('ask_price', 0) - data.get('bid_price', 0)
-        data['spread_pct'] = (data['spread'] / data.get('mark_price', 1)) * 100 if data.get('mark_price') else 0
-        
-        return data
     
     # ==================== Statistics ====================
     
