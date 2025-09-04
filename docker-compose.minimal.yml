@@ -7,8 +7,7 @@ services:
     container_name: bybit-redis-minimal
     ports:
       - "${REDIS_PORT:-6380}:6379"
-    volumes:
-      - /dev/null:/data  # No persistence - RAM only
+    # No volumes - RAM only (no persistence)
     command: redis-server --save "" --appendonly no --maxmemory 50mb --maxmemory-policy allkeys-lru
     networks:
       - bybit-network
