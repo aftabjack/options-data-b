@@ -32,7 +32,7 @@ services:
       - BATCH_SIZE=50  # Reduced
       - BATCH_TIMEOUT=0.5  # Faster updates
       - WRITE_QUEUE_SIZE=500  # Minimal queue
-      - ENABLE_NOTIFICATIONS=${ENABLE_NOTIFICATIONS:-false}
+      - ENABLE_NOTIFICATIONS=true  # With Telegram enabled
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-}
       - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID:-}
       - PROJECT_NAME=${PROJECT_NAME:-Bybit Options Minimal}
