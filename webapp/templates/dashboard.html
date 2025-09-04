@@ -449,30 +449,16 @@
     <div class="container-fluid mt-3">
         <!-- Stats Row -->
         <div class="row mb-3 stats-row">
-            <div class="col-6 col-md-3">
+            <div class="col-6">
                 <div class="stats-card">
-                    <div class="text-muted small">Total</div>
+                    <div class="text-muted small">Total Options</div>
                     <div class="stats-value" id="totalSymbols">-</div>
                 </div>
             </div>
-            <div class="col-6 col-md-3">
+            <div class="col-6">
                 <div class="stats-card">
-                    <div class="text-muted small d-none d-md-block">Messages</div>
-                    <div class="text-muted small d-md-none">Msgs</div>
-                    <div class="stats-value" id="messagesProcessed">-</div>
-                </div>
-            </div>
-            <div class="col-6 col-md-3">
-                <div class="stats-card">
-                    <div class="text-muted small">Updated</div>
+                    <div class="text-muted small">Last Updated</div>
                     <div class="stats-value" id="lastUpdate">-</div>
-                </div>
-            </div>
-            <div class="col-6 col-md-3">
-                <div class="stats-card">
-                    <div class="text-muted small d-none d-md-block">Memory</div>
-                    <div class="text-muted small d-md-none">Mem</div>
-                    <div class="stats-value" id="memoryUsage">-</div>
                 </div>
             </div>
         </div>
@@ -524,13 +510,6 @@
                             <option value="call">Calls Only</option>
                             <option value="put">Puts Only</option>
                         </select>
-                    </div>
-                    <div class="col-12 col-md-6">
-                        <label class="form-label">Market Info</label>
-                        <div class="input-group input-group-sm">
-                            <span class="input-group-text bg-dark text-white" id="currentPrice">Loading...</span>
-                            <span class="input-group-text bg-dark text-white" id="atmStrike">ATM: -</span>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -753,8 +732,8 @@
         let allOptionsData = [];
         let fullOptionsCache = {}; // Cache all options by asset
         let filterResultCache = {}; // Cache filtered results
-        let currentPrice = 0;
-        let atmStrike = 0;
+        // let currentPrice = 0;  // Removed - Market Info section removed
+        // let atmStrike = 0;  // Removed - Market Info section removed
 
         // Initialize
         $(document).ready(function() {
@@ -864,6 +843,15 @@
             if (fullOptionsCache[asset]) {
                 // Use cached data
                 allOptionsData = fullOptionsCache[asset];
+                
+                // Update current price and ATM from cached data
+                if (allOptionsData.length > 0) {
+                    // Market Info removed - no need to update price
+                    // currentPrice = allOptionsData[0].index_price || allOptionsData[0].underlying || 0;
+                    // $('#currentPrice').text(`$${currentPrice.toFixed(2)}`);
+                    // findATMStrike(allOptionsData);
+                }
+                
                 loadExpiriesAndFilter();
                 return;
             }
@@ -878,8 +866,12 @@
                 
                 // Update current price and ATM
                 if (data.length > 0) {
-                    currentPrice = data[0].underlying;
-                    $('#currentPrice').text(`$${currentPrice.toFixed(2)}`);
+                    // Use index price from the first option (all options should have similar index price)
+                    // If index_price is not available, fall back to underlying
+                    // Market Info removed - no need to update price
+                    // currentPrice = data[0].index_price || data[0].underlying || 0;
+                    // $('#currentPrice').text(`$${currentPrice.toFixed(2)}`);
+                    // findATMStrike(data);
                 }
                 
                 // Load expiries and filter
@@ -988,7 +980,7 @@
             
             // Find ATM for filtered data
             if (filtered.length > 0) {
-                findATMStrike(filtered);
+                // findATMStrike(filtered);  // Market Info removed
             }
             
             // Update table with optimized redraw
@@ -1054,8 +1046,8 @@
                 
                 // Update current price
                 if (data.length > 0) {
-                    currentPrice = data[0].underlying;
-                    $('#currentPrice').text(`$${currentPrice.toFixed(2)}`);
+                    // currentPrice = data[0].underlying;  // Market Info removed
+                    // $('#currentPrice').text(`$${currentPrice.toFixed(2)}`);  // Market Info removed
                 }
                 
                 // Re-filter with current settings
@@ -1065,21 +1057,21 @@
             });
         }
         
-        // Find ATM strike
-        function findATMStrike(data) {
-            const strikes = [...new Set(data.map(o => parseFloat(o.strike)))].sort((a, b) => a - b);
-            let minDiff = Infinity;
-            
-            strikes.forEach(strike => {
-                const diff = Math.abs(strike - currentPrice);
-                if (diff < minDiff) {
-                    minDiff = diff;
-                    atmStrike = strike;
-                }
-            });
-            
-            $('#atmStrike').text(`ATM: ${atmStrike}`);
-        }
+        // Market Info section removed - findATMStrike no longer needed
+        // function findATMStrike(data) {
+        //     const strikes = [...new Set(data.map(o => parseFloat(o.strike)))].sort((a, b) => a - b);
+        //     let minDiff = Infinity;
+        //     
+        //     strikes.forEach(strike => {
+        //         const diff = Math.abs(strike - currentPrice);
+        //         if (diff < minDiff) {
+        //             minDiff = diff;
+        //             atmStrike = strike;
+        //         }
+        //     });
+        //     
+        //     $('#atmStrike').text(`ATM: ${atmStrike}`);
+        // }
 
         // Apply filters (redirect to filterAndDisplay for consistency)
         function applyFilters() {
@@ -1114,8 +1106,8 @@
                 const stats = JSON.parse(event.data);
                 
                 $('#totalSymbols').text(stats.total_symbols || '-');
-                $('#messagesProcessed').text(formatNumber(stats.messages_processed || 0));
-                $('#memoryUsage').text(stats.redis_memory || '-');
+                // $('#messagesProcessed').text(formatNumber(stats.messages_processed || 0));  // Removed from UI
+                // $('#memoryUsage').text(stats.redis_memory || '-');  // Removed from UI
                 
                 if (stats.last_update) {
                     const date = new Date(parseFloat(stats.last_update) * 1000);
