@@ -286,10 +286,9 @@ class ProductionOptionsTracker:
             if not symbol:
                 return
             
-            # Prepare minimal data structure
+            # Prepare minimal data structure (no timestamp - only WebSocket data)
             record = {
                 'symbol': symbol,
-                'timestamp': time.time(),
                 'bid_iv': self._fast_float(data.get('bidIv')),
                 'ask_iv': self._fast_float(data.get('askIv')),
                 'last_price': self._fast_float(data.get('lastPrice')),

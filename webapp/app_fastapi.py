@@ -297,8 +297,7 @@ class OptionsDataProvider:
                     "theta": float(data.get("theta", 0) or 0),
                     "vega": float(data.get("vega", 0) or 0),
                     "iv": float(data.get("mark_iv", 0) or 0),
-                    "underlying": float(data.get("underlying_price", 0) or 0),
-                    "timestamp": float(data.get("timestamp", 0) or 0)
+                    "underlying": float(data.get("underlying_price", 0) or 0)
                 })
             except Exception as e:
                 continue
