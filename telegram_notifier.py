@@ -43,9 +43,9 @@ class TelegramNotifier:
         self.connected = False
         self.enabled = bool(self.api_id and self.api_hash and self.notification_channel)
         
-        # Message throttling
+        # Message throttling (increased for less spam)
         self.last_message_time = {}
-        self.throttle_seconds = 60  # Minimum seconds between similar messages
+        self.throttle_seconds = 300  # 5 minutes between similar messages
         
     async def connect(self):
         """Connect to Telegram"""
@@ -177,12 +177,13 @@ class TelegramNotifier:
 
 
 class NotificationManager:
-    """Manages notifications for the options tracker"""
+    """Manages notifications for the options tracker - CRITICAL ERRORS ONLY"""
     
     def __init__(self):
         self.notifier = None
         self.error_counts = {}
-        self.max_errors_before_critical = 5
+        self.max_errors_before_critical = 10  # Increased threshold for less spam
+        self.critical_only = True  # Only send critical notifications
         
     async def initialize(self):
         """Initialize the notification system"""
@@ -203,10 +204,8 @@ class NotificationManager:
     async def shutdown(self):
         """Clean shutdown of notification system"""
         if self.notifier and self.notifier.connected:
-            await self.notifier.info(
-                "System Shutdown",
-                "Bybit Options Tracker is shutting down gracefully"
-            )
+            # Don't send shutdown notifications (not critical)
+            # Only disconnect silently
             await self.notifier.disconnect()
     
     async def handle_error(self, error_type: str, error_message: str, 
@@ -234,14 +233,15 @@ class NotificationManager:
             critical = True
             self.error_counts[error_type] = 0  # Reset counter
         
-        # Send appropriate notification
+        # Only send critical notifications (skip non-critical)
         if critical:
             await self.notifier.critical(
-                f"Critical {error_type} Error",
+                f"🚨 CRITICAL {error_type} Error",
                 error_message,
                 details
             )
-        else:
+        elif not self.critical_only:
+            # Only send non-critical if critical_only is False
             await self.notifier.error(
                 f"{error_type} Error",
                 error_message,
@@ -249,12 +249,13 @@ class NotificationManager:
             )
     
     async def websocket_disconnected(self, reason: str = None):
-        """Notify about WebSocket disconnection"""
+        """Notify about WebSocket disconnection - Only if persistent"""
+        # Only mark as critical if it's been disconnected for a while
         await self.handle_error(
             "WebSocket",
             f"WebSocket connection lost: {reason or 'Unknown reason'}",
-            {"Action": "Attempting reconnection"},
-            critical=False
+            {"Action": "Attempting reconnection", "Manual intervention": "Check network and restart if needed"},
+            critical=False  # Will become critical after max_errors_before_critical failures
         )
     
     async def redis_connection_failed(self, error: str):

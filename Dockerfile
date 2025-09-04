@@ -14,6 +14,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application files
 COPY options_tracker_production.py .
 COPY telegram_notifier.py .
+COPY telegram_bot_notifier.py .
 COPY data_access.py .
 COPY config_loader.py .
 COPY config.yaml .

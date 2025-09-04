@@ -41,6 +41,9 @@ class OptionsDataAccess:
         """Get single option data by symbol"""
         data = self.redis_client.hgetall(f"option:{symbol}")
         if data:
+            # Add symbol to data if not present
+            if 'symbol' not in data or not data['symbol']:
+                data['symbol'] = symbol
             # Convert string values to appropriate types
             return self._parse_option_data(data)
         return {}
@@ -58,6 +61,9 @@ class OptionsDataAccess:
         for symbol in symbols:
             data = self.get_option(symbol)
             if data:
+                # Ensure symbol is set
+                if not data.get('symbol'):
+                    data['symbol'] = symbol
                 options.append(data)
         return options
     

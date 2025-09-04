@@ -300,48 +300,120 @@
             font-weight: 500;
         }
         
-        /* Column visibility controls */
-        .column-controls {
-            background-color: #1f2937;
-            border: 1px solid #30363d;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 15px;
+        /* Responsive table wrapper */
+        #optionsTable_wrapper {
+            transition: opacity 0.15s ease-in-out;
+            width: 100%;
         }
         
-        .column-checkbox {
-            display: inline-block;
-            margin-right: 20px;
-            margin-bottom: 10px;
-            color: #ffffff;
+        /* Responsive table with min/max widths */
+        #optionsTable {
+            width: 100% !important;
+            table-layout: auto;
         }
         
-        .column-checkbox input {
-            margin-right: 8px;
-            cursor: pointer;
+        /* Column-specific responsive widths */
+        .col-symbol { 
+            min-width: 120px; 
+            max-width: 200px; 
+            width: 15%;
         }
         
-        .column-checkbox label {
-            cursor: pointer;
-            color: #ffffff;
-            font-size: 14px;
+        .col-type { 
+            min-width: 60px; 
+            max-width: 80px; 
+            width: 5%;
         }
         
-        .column-controls h6 {
-            color: #ffffff;
-            margin-bottom: 15px;
-            font-weight: 600;
+        .col-strike, .col-expiry { 
+            min-width: 70px; 
+            max-width: 100px; 
+            width: 7%;
         }
         
-        .preset-buttons {
-            margin-top: 10px;
-            padding-top: 10px;
-            border-top: 1px solid #30363d;
+        .col-last, .col-mark { 
+            min-width: 75px; 
+            max-width: 100px; 
+            width: 8%;
         }
         
-        .preset-buttons button {
-            margin-right: 5px;
-            margin-bottom: 5px;
+        .col-volume, .col-oi { 
+            min-width: 80px; 
+            max-width: 120px; 
+            width: 9%;
+        }
+        
+        .col-delta, .col-theta, .col-vega, .col-iv { 
+            min-width: 60px; 
+            max-width: 80px; 
+            width: 6%;
+        }
+        
+        .col-gamma { 
+            min-width: 70px; 
+            max-width: 90px; 
+            width: 7%;
+        }
+        
+        .col-underlying { 
+            min-width: 80px; 
+            max-width: 110px; 
+            width: 8%;
+        }
+        
+        /* Text handling in cells */
+        #optionsTable th,
+        #optionsTable td {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            padding: 8px 5px;
+        }
+        
+        /* Responsive breakpoints */
+        @media (max-width: 1400px) {
+            .table-responsive {
+                overflow-x: auto;
+            }
+            
+            #optionsTable {
+                min-width: 1000px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            #optionsTable {
+                min-width: 800px;
+            }
+            
+            /* Hide less important columns on mobile */
+            .col-gamma, .col-theta, .col-vega, .col-underlying {
+                display: none;
+            }
+        }
+        
+        .filtering-indicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(31, 111, 235, 0.9);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            z-index: 1000;
+            display: none;
+        }
+        
+        /* Optimize table rendering */
+        .dataTables_scrollBody {
+            overflow-y: auto !important;
+            max-height: 600px;
+        }
+        
+        /* Instant feedback for dropdown changes */
+        select.form-select:focus {
+            transition: none !important;
         }
     </style>
 </head>
@@ -362,7 +434,7 @@
                         <span class="d-lg-none">Auto</span>
                     </label>
                 </div>
-                <button class="btn btn-sm btn-outline-light me-2" onclick="refreshData()">
+                <button class="btn btn-sm btn-outline-light me-2" id="refreshBtn" onclick="refreshData(true)">
                     <i class="fas fa-sync-alt"></i>
                     <span class="d-none d-sm-inline">Refresh</span>
                 </button>
@@ -405,85 +477,6 @@
             </div>
         </div>
 
-        <!-- Column Visibility Controls -->
-        <div class="column-controls" id="columnControls">
-            <h6>
-                <i class="fas fa-eye"></i> Column Visibility
-                <button class="btn btn-sm btn-outline-primary float-end" onclick="toggleColumnPanel()">
-                    <i class="fas fa-chevron-up" id="toggleIcon"></i>
-                </button>
-            </h6>
-            <div id="columnPanel">
-                <div class="row">
-                    <div class="col-12">
-                        <div class="column-checkbox">
-                            <input type="checkbox" id="col-symbol" checked onchange="toggleColumn(0, 'symbol')">
-                            <label for="col-symbol">Symbol</label>
-                        </div>
-                        <div class="column-checkbox">
-                            <input type="checkbox" id="col-type" checked onchange="toggleColumn(1, 'type')">
-                            <label for="col-type">Type</label>
-                        </div>
-                        <div class="column-checkbox">
-                            <input type="checkbox" id="col-strike" checked onchange="toggleColumn(2, 'strike')">
-                            <label for="col-strike">Strike</label>
-                        </div>
-                        <div class="column-checkbox">
-                            <input type="checkbox" id="col-expiry" checked onchange="toggleColumn(3, 'expiry')">
-                            <label for="col-expiry">Expiry</label>
-                        </div>
-                        <div class="column-checkbox">
-                            <input type="checkbox" id="col-last" checked onchange="toggleColumn(4, 'last')">
-                            <label for="col-last">Last Price</label>
-                        </div>
-                        <div class="column-checkbox">
-                            <input type="checkbox" id="col-mark" checked onchange="toggleColumn(5, 'mark')">
-                            <label for="col-mark">Mark Price</label>
-                        </div>
-                        <div class="column-checkbox">
-                            <input type="checkbox" id="col-volume" checked onchange="toggleColumn(6, 'volume')">
-                            <label for="col-volume">Volume</label>
-                        </div>
-                        <div class="column-checkbox">
-                            <input type="checkbox" id="col-oi" checked onchange="toggleColumn(7, 'oi')">
-                            <label for="col-oi">Open Interest</label>
-                        </div>
-                        <div class="column-checkbox">
-                            <input type="checkbox" id="col-delta" checked onchange="toggleColumn(8, 'delta')">
-                            <label for="col-delta">Delta</label>
-                        </div>
-                        <div class="column-checkbox">
-                            <input type="checkbox" id="col-gamma" onchange="toggleColumn(9, 'gamma')">
-                            <label for="col-gamma">Gamma</label>
-                        </div>
-                        <div class="column-checkbox">
-                            <input type="checkbox" id="col-theta" onchange="toggleColumn(10, 'theta')">
-                            <label for="col-theta">Theta</label>
-                        </div>
-                        <div class="column-checkbox">
-                            <input type="checkbox" id="col-vega" onchange="toggleColumn(11, 'vega')">
-                            <label for="col-vega">Vega</label>
-                        </div>
-                        <div class="column-checkbox">
-                            <input type="checkbox" id="col-iv" checked onchange="toggleColumn(12, 'iv')">
-                            <label for="col-iv">IV</label>
-                        </div>
-                        <div class="column-checkbox">
-                            <input type="checkbox" id="col-underlying" onchange="toggleColumn(13, 'underlying')">
-                            <label for="col-underlying">Underlying</label>
-                        </div>
-                    </div>
-                </div>
-                <div class="preset-buttons">
-                    <button class="btn btn-sm btn-secondary" onclick="applyPreset('basic')">Basic View</button>
-                    <button class="btn btn-sm btn-secondary" onclick="applyPreset('trader')">Trader View</button>
-                    <button class="btn btn-sm btn-secondary" onclick="applyPreset('greeks')">Greeks Focus</button>
-                    <button class="btn btn-sm btn-secondary" onclick="applyPreset('all')">Show All</button>
-                    <button class="btn btn-sm btn-warning" onclick="resetColumns()">Reset Default</button>
-                </div>
-            </div>
-        </div>
-
         <!-- Asset Tabs -->
         <ul class="nav nav-tabs" id="assetTabs" role="tablist">
             {% for symbol, info in assets.items() %}
@@ -508,6 +501,9 @@
                 <button class="btn btn-secondary btn-sm mt-2" onclick="showSettingsModal()">
                     <i class="fas fa-cog"></i> <span class="d-none d-lg-inline">Settings</span>
                 </button>
+                <button class="btn btn-info btn-sm mt-2" onclick="showColumnModal()">
+                    <i class="fas fa-columns"></i> <span class="d-none d-lg-inline">Columns</span>
+                </button>
             </li>
         </ul>
 
@@ -517,7 +513,7 @@
                 <div class="row g-2">
                     <div class="col-12 col-md-3">
                         <label class="form-label">Expiry Date</label>
-                        <select class="form-select form-select-sm" id="expiryFilter" onchange="applyFilters()">
+                        <select class="form-select form-select-sm" id="expiryFilter" onchange="handleExpiryChange()">
                             <option value="all">All Expiries</option>
                         </select>
                     </div>
@@ -549,7 +545,7 @@
                         <span class="badge bg-success ms-2">Displayed: <span id="displayedCount">0</span></span>
                     </div>
                     <div>
-                        <button class="btn btn-sm btn-outline-primary" onclick="refreshData()">
+                        <button class="btn btn-sm btn-outline-primary" onclick="refreshData(true)">
                             <i class="fas fa-sync-alt"></i> Refresh
                         </button>
                     </div>
@@ -558,6 +554,9 @@
                     <div class="spinner-border text-primary" role="status">
                         <span class="visually-hidden">Loading...</span>
                     </div>
+                </div>
+                <div class="filtering-indicator">
+                    <i class="fas fa-filter"></i> Filtering...
                 </div>
                 <div class="table-responsive">
                     <table id="optionsTable" class="table table-dark table-striped table-hover table-sm">
@@ -653,6 +652,93 @@
         </div>
     </div>
 
+    <!-- Column Visibility Modal -->
+    <div class="modal fade" id="columnModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Column Visibility Settings</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-12">
+                            <h6 class="text-muted mb-3">Select columns to display in the table:</h6>
+                            <div class="form-check form-switch mb-2">
+                                <input class="form-check-input" type="checkbox" id="col-symbol" checked>
+                                <label class="form-check-label" for="col-symbol">Symbol</label>
+                            </div>
+                            <div class="form-check form-switch mb-2">
+                                <input class="form-check-input" type="checkbox" id="col-type" checked>
+                                <label class="form-check-label" for="col-type">Type (Call/Put)</label>
+                            </div>
+                            <div class="form-check form-switch mb-2">
+                                <input class="form-check-input" type="checkbox" id="col-strike" checked>
+                                <label class="form-check-label" for="col-strike">Strike Price</label>
+                            </div>
+                            <div class="form-check form-switch mb-2">
+                                <input class="form-check-input" type="checkbox" id="col-expiry" checked>
+                                <label class="form-check-label" for="col-expiry">Expiry Date</label>
+                            </div>
+                            <div class="form-check form-switch mb-2">
+                                <input class="form-check-input" type="checkbox" id="col-last" checked>
+                                <label class="form-check-label" for="col-last">Last Price</label>
+                            </div>
+                            <div class="form-check form-switch mb-2">
+                                <input class="form-check-input" type="checkbox" id="col-mark" checked>
+                                <label class="form-check-label" for="col-mark">Mark Price</label>
+                            </div>
+                            <div class="form-check form-switch mb-2">
+                                <input class="form-check-input" type="checkbox" id="col-volume" checked>
+                                <label class="form-check-label" for="col-volume">24h Volume</label>
+                            </div>
+                            <div class="form-check form-switch mb-2">
+                                <input class="form-check-input" type="checkbox" id="col-oi" checked>
+                                <label class="form-check-label" for="col-oi">Open Interest</label>
+                            </div>
+                            <div class="form-check form-switch mb-2">
+                                <input class="form-check-input" type="checkbox" id="col-delta" checked>
+                                <label class="form-check-label" for="col-delta">Delta</label>
+                            </div>
+                            <div class="form-check form-switch mb-2">
+                                <input class="form-check-input" type="checkbox" id="col-gamma">
+                                <label class="form-check-label" for="col-gamma">Gamma</label>
+                            </div>
+                            <div class="form-check form-switch mb-2">
+                                <input class="form-check-input" type="checkbox" id="col-theta">
+                                <label class="form-check-label" for="col-theta">Theta</label>
+                            </div>
+                            <div class="form-check form-switch mb-2">
+                                <input class="form-check-input" type="checkbox" id="col-vega">
+                                <label class="form-check-label" for="col-vega">Vega</label>
+                            </div>
+                            <div class="form-check form-switch mb-2">
+                                <input class="form-check-input" type="checkbox" id="col-iv" checked>
+                                <label class="form-check-label" for="col-iv">Implied Volatility</label>
+                            </div>
+                            <div class="form-check form-switch mb-2">
+                                <input class="form-check-input" type="checkbox" id="col-underlying">
+                                <label class="form-check-label" for="col-underlying">Underlying Price</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <button class="btn btn-sm btn-secondary" onclick="applyPresetColumns('basic')">Basic View</button>
+                            <button class="btn btn-sm btn-secondary" onclick="applyPresetColumns('trader')">Trader View</button>
+                            <button class="btn btn-sm btn-secondary" onclick="applyPresetColumns('greeks')">Greeks Focus</button>
+                            <button class="btn btn-sm btn-secondary" onclick="applyPresetColumns('all')">Show All</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="applyColumnSettings()">Apply Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -665,37 +751,51 @@
         let autoRefreshInterval = null;
         let eventSource = null;
         let allOptionsData = [];
+        let fullOptionsCache = {}; // Cache all options by asset
+        let filterResultCache = {}; // Cache filtered results
         let currentPrice = 0;
         let atmStrike = 0;
-        let columnVisibility = {};
 
         // Initialize
         $(document).ready(function() {
-            // Load column preferences from localStorage
-            loadColumnPreferences();
-            // Initialize DataTable
+            // Pre-populate Call/Put dropdown immediately (no waiting)
+            $('#typeFilter').html(`
+                <option value="all">All Options</option>
+                <option value="call">Calls Only</option>
+                <option value="put">Puts Only</option>
+            `);
+            
+            // Initialize DataTable with responsive design
             optionsTable = $('#optionsTable').DataTable({
                 pageLength: 50,
                 lengthMenu: [[10, 25, 50, 100, 250, 500, -1], [10, 25, 50, 100, 250, 500, "All"]],
                 order: [[6, 'desc']], // Sort by volume
+                deferRender: true, // Only render visible rows
+                processing: true, // Show processing indicator
+                responsive: false, // We'll handle responsiveness ourselves
+                scrollX: true, // Enable horizontal scrolling on mobile
+                autoWidth: true, // Let DataTables calculate widths
                 columns: [
-                    { data: 'symbol' },
-                    { data: 'type', render: renderType },
-                    { data: 'strike' },
-                    { data: 'expiry' },
-                    { data: 'last_price', render: renderPrice },
-                    { data: 'mark_price', render: renderPrice },
-                    { data: 'volume_24h', render: renderVolume },
-                    { data: 'open_interest', render: renderNumber },
-                    { data: 'delta', render: renderDelta },
-                    { data: 'gamma', render: renderSmallNumber },
-                    { data: 'theta', render: renderTheta },
-                    { data: 'vega', render: renderNumber },
-                    { data: 'iv', render: renderIV },
-                    { data: 'underlying', render: renderPrice }
+                    { data: 'symbol', className: 'col-symbol' },
+                    { data: 'type', render: renderType, className: 'col-type' },
+                    { data: 'strike', className: 'col-strike' },
+                    { data: 'expiry', className: 'col-expiry' },
+                    { data: 'last_price', render: renderPrice, className: 'col-last' },
+                    { data: 'mark_price', render: renderPrice, className: 'col-mark' },
+                    { data: 'volume_24h', render: renderVolume, className: 'col-volume' },
+                    { data: 'open_interest', render: renderNumber, className: 'col-oi' },
+                    { data: 'delta', render: renderDelta, className: 'col-delta' },
+                    { data: 'gamma', render: renderSmallNumber, className: 'col-gamma' },
+                    { data: 'theta', render: renderTheta, className: 'col-theta' },
+                    { data: 'vega', render: renderNumber, className: 'col-vega' },
+                    { data: 'iv', render: renderIV, className: 'col-iv' },
+                    { data: 'underlying', render: renderPrice, className: 'col-underlying' }
                 ]
             });
 
+            // Load column settings
+            loadColumnSettings();
+            
             // Load initial data
             loadAssetData(currentAsset);
             
@@ -713,89 +813,255 @@
         }
 
         function renderPrice(data) {
-            return data ? `$${parseFloat(data).toFixed(2)}` : '-';
+            if (data === null || data === undefined) return '-';
+            return `$${parseFloat(data).toFixed(2)}`;
         }
 
         function renderVolume(data) {
-            if (!data) return '-';
+            if (data === null || data === undefined) return '-';
+            if (data === 0) return '0';
             if (data > 1000000) return `${(data/1000000).toFixed(2)}M`;
             if (data > 1000) return `${(data/1000).toFixed(2)}K`;
             return data.toFixed(0);
         }
 
         function renderNumber(data) {
-            return data ? parseFloat(data).toFixed(4) : '-';
+            if (data === null || data === undefined) return '-';
+            return parseFloat(data).toFixed(4);
         }
 
         function renderDelta(data) {
-            if (!data) return '-';
+            if (data === null || data === undefined) return '-';
             const value = parseFloat(data);
             const color = value > 0 ? 'positive' : value < 0 ? 'negative' : 'neutral';
             return `<span class="${color}">${value.toFixed(4)}</span>`;
         }
 
         function renderTheta(data) {
-            if (!data) return '-';
+            if (data === null || data === undefined) return '-';
             const value = parseFloat(data);
-            return `<span class="negative">${value.toFixed(2)}</span>`;
+            const color = value < 0 ? 'negative' : 'neutral';
+            return `<span class="${color}">${value.toFixed(2)}</span>`;
         }
 
         function renderSmallNumber(data) {
-            return data ? parseFloat(data).toFixed(6) : '-';
+            if (data === null || data === undefined) return '-';
+            return parseFloat(data).toFixed(6);
         }
 
         function renderIV(data) {
-            return data ? `${(parseFloat(data) * 100).toFixed(1)}%` : '-';
+            if (data === null || data === undefined) return '-';
+            if (data === 0) return '0.0%';
+            return `${(parseFloat(data) * 100).toFixed(1)}%`;
         }
 
-        // Load asset data
+        // Load asset data - OPTIMIZED VERSION
         function loadAssetData(asset) {
             currentAsset = asset;
             $('.loading').show();
             
-            // Load expiries
-            $.get(`/api/expiries/${asset}`, function(expiries) {
-                const select = $('#expiryFilter');
-                select.html('<option value="all">All Expiries</option>');
-                expiries.forEach(exp => {
-                    // Format date nicely
-                    const dateStr = exp.replace(/^(\d{2})(\w{3})(\d{2})$/, '$1-$2-$3');
-                    select.append(`<option value="${exp}">${dateStr}</option>`);
-                });
-            });
+            // Check if we have cached data for this asset
+            if (fullOptionsCache[asset]) {
+                // Use cached data
+                allOptionsData = fullOptionsCache[asset];
+                loadExpiriesAndFilter();
+                return;
+            }
             
-            // Load options data
-            refreshData();
-        }
-
-        // Refresh data
-        function refreshData() {
-            const expiry = $('#expiryFilter').val();
-            
-            $.get(`/api/options/${currentAsset}`, {
-                expiry: expiry || 'all'
+            // Load ALL options data once (for all expiries)
+            $.get(`/api/options/${asset}`, {
+                expiry: 'all'
             }, function(data) {
+                // Cache the full dataset
+                fullOptionsCache[asset] = data;
                 allOptionsData = data;
-                
-                // Update counts
-                $('#totalOptionsCount').text(data.length);
                 
                 // Update current price and ATM
                 if (data.length > 0) {
                     currentPrice = data[0].underlying;
                     $('#currentPrice').text(`$${currentPrice.toFixed(2)}`);
-                    
-                    // Find ATM strike
-                    findATMStrike(data);
                 }
                 
-                // Apply filters
-                applyFilters();
+                // Load expiries and filter
+                loadExpiriesAndFilter();
                 
-                $('.loading').hide();
             }).fail(function() {
                 $('.loading').hide();
                 console.error('Failed to load options data');
+            });
+        }
+        
+        // Load expiries dropdown and filter data
+        function loadExpiriesAndFilter() {
+            const asset = currentAsset;
+            
+            // Count options per expiry
+            const expiryCount = {};
+            allOptionsData.forEach(option => {
+                expiryCount[option.expiry] = (expiryCount[option.expiry] || 0) + 1;
+            });
+            
+            // Get unique expiries and sort them
+            const expiries = Object.keys(expiryCount).sort();
+            
+            const select = $('#expiryFilter');
+            const totalCount = allOptionsData.length;
+            select.html(`<option value="all">All Expiries (${totalCount})</option>`);
+            
+            expiries.forEach((exp) => {
+                // Format date nicely and show count
+                const dateStr = exp.replace(/^(\d{2})(\w{3})(\d{2})$/, '$1-$2-$3');
+                const count = expiryCount[exp];
+                select.append(`<option value="${exp}">${dateStr} (${count})</option>`);
+            });
+            
+            // Default to "All Expiries" to show all data
+            select.val('all');
+            
+            // Apply filters immediately (no API call needed) and reset to page 1
+            filterAndDisplay(true);
+        }
+        
+        // Handle expiry change (instant filtering)
+        function handleExpiryChange() {
+            filterAndDisplay(true); // true = reset to page 1
+        }
+
+        // Filter and display data with caching
+        function filterAndDisplay(resetPage = false) {
+            const expiry = $('#expiryFilter').val();
+            const typeFilter = $('#typeFilter').val();
+            
+            // Create cache key for this filter combination
+            const cacheKey = `${currentAsset}_${expiry}_${typeFilter}`;
+            
+            // Check if we have cached results for this exact filter
+            if (filterResultCache[cacheKey]) {
+                displayFilteredData(filterResultCache[cacheKey], resetPage);
+                return;
+            }
+            
+            // Start with cached full dataset
+            let filtered = fullOptionsCache[currentAsset] || allOptionsData;
+            
+            // Filter by expiry
+            if (expiry && expiry !== 'all') {
+                filtered = filtered.filter(item => item.expiry === expiry);
+            }
+            
+            // Filter by type
+            if (typeFilter !== 'all') {
+                filtered = filtered.filter(item => {
+                    if (typeFilter === 'call') {
+                        return item.type === 'Call';
+                    } else if (typeFilter === 'put') {
+                        return item.type === 'Put';
+                    }
+                    return true;
+                });
+            }
+            
+            // Cache the filtered results
+            filterResultCache[cacheKey] = filtered;
+            
+            // Display the filtered data
+            displayFilteredData(filtered, resetPage);
+        }
+        
+        // Display filtered data (separated for reuse)
+        function displayFilteredData(filtered, resetPage = false) {
+            // Save current scroll position
+            const scrollBody = $('.dataTables_scrollBody');
+            const scrollTop = scrollBody.scrollTop();
+            const windowScrollY = window.scrollY;
+            
+            // Save current page info
+            const pageInfo = optionsTable.page.info();
+            const currentPage = pageInfo.page;
+            
+            // Show subtle transition
+            $('#optionsTable_wrapper').css('opacity', '0.7');
+            
+            // Update counts
+            $('#totalOptionsCount').text(filtered.length);
+            $('#displayedCount').text(filtered.length);
+            
+            // Find ATM for filtered data
+            if (filtered.length > 0) {
+                findATMStrike(filtered);
+            }
+            
+            // Update table with optimized redraw
+            optionsTable.clear();
+            optionsTable.rows.add(filtered);
+            
+            if (resetPage) {
+                // Reset to first page when filters change
+                optionsTable.page(0).draw(false);
+            } else {
+                // For auto-refresh, try to stay on current page
+                optionsTable.draw(false);
+                
+                // Restore page if it still exists
+                const newPageInfo = optionsTable.page.info();
+                if (currentPage < newPageInfo.pages) {
+                    optionsTable.page(currentPage).draw(false);
+                }
+            }
+            
+            // Restore scroll positions
+            scrollBody.scrollTop(scrollTop);
+            window.scrollTo(0, windowScrollY);
+            
+            // Restore opacity
+            setTimeout(() => {
+                $('#optionsTable_wrapper').css('opacity', '1');
+            }, 100);
+            
+            $('.loading').hide();
+        }
+        
+        // Refresh data (for auto-refresh and manual refresh)
+        function refreshData(isManual = false) {
+            const asset = currentAsset;
+            
+            // Don't refresh if user is interacting with dropdowns or typing
+            if (!isManual) {
+                // Check if any dropdown is open or focused
+                if ($('select:focus').length > 0 || $('.dropdown-menu:visible').length > 0) {
+                    return; // Skip this refresh cycle
+                }
+                
+                // Check if user is selecting text in the table
+                if (window.getSelection().toString()) {
+                    return; // Skip if text is selected
+                }
+            }
+            
+            // Clear filter cache when refreshing data
+            filterResultCache = {};
+            
+            // Show subtle loading indicator
+            $('#refreshBtn').find('i').addClass('fa-spin');
+            
+            // Reload ALL data
+            $.get(`/api/options/${asset}`, {
+                expiry: 'all'
+            }, function(data) {
+                // Update cache
+                fullOptionsCache[asset] = data;
+                allOptionsData = data;
+                
+                // Update current price
+                if (data.length > 0) {
+                    currentPrice = data[0].underlying;
+                    $('#currentPrice').text(`$${currentPrice.toFixed(2)}`);
+                }
+                
+                // Re-filter with current settings
+                filterAndDisplay();
+                
+                $('#refreshBtn').find('i').removeClass('fa-spin');
             });
         }
         
@@ -815,35 +1081,9 @@
             $('#atmStrike').text(`ATM: ${atmStrike}`);
         }
 
-        // Apply filters
+        // Apply filters (redirect to filterAndDisplay for consistency)
         function applyFilters() {
-            const typeFilter = $('#typeFilter').val();
-            const expiry = $('#expiryFilter').val();
-            
-            let filtered = allOptionsData;
-            
-            // Apply type filter
-            if (typeFilter !== 'all') {
-                filtered = filtered.filter(item => {
-                    if (typeFilter === 'call') {
-                        return item.type === 'Call';
-                    } else if (typeFilter === 'put') {
-                        return item.type === 'Put';
-                    }
-                    return true;
-                });
-            }
-            
-            // Update table
-            optionsTable.clear();
-            optionsTable.rows.add(filtered);
-            optionsTable.draw();
-            
-            // Apply column visibility after drawing
-            applyColumnVisibility();
-            
-            // Update displayed count
-            $('#displayedCount').text(filtered.length);
+            filterAndDisplay(true); // true = reset to page 1 when filters change
         }
 
         // Auto refresh
@@ -998,38 +1238,17 @@
             });
         }
 
-        function removeAsset(symbol) {
-            if (confirm(`Remove ${symbol} from monitoring?`)) {
-                $.ajax({
-                    url: `/api/assets/${symbol}/remove`,
-                    method: 'DELETE',
-                    success: function() {
-                        location.reload();
-                    },
-                    error: function(xhr) {
-                        alert(xhr.responseJSON.error || 'Failed to remove asset');
-                    }
-                });
-            }
-        }
-        
         // Column Visibility Functions
-        function loadColumnPreferences() {
+        let columnSettings = {};
+        
+        function loadColumnSettings() {
+            // Load from localStorage
             const saved = localStorage.getItem('columnVisibility');
             if (saved) {
-                columnVisibility = JSON.parse(saved);
-                // Apply saved preferences to checkboxes
-                Object.keys(columnVisibility).forEach(key => {
-                    const checkbox = document.getElementById(`col-${key}`);
-                    if (checkbox) {
-                        checkbox.checked = columnVisibility[key];
-                    }
-                });
-                // Apply to DataTable columns
-                applyColumnVisibility();
+                columnSettings = JSON.parse(saved);
             } else {
-                // Set default visibility
-                columnVisibility = {
+                // Default settings
+                columnSettings = {
                     symbol: true,
                     type: true,
                     strike: true,
@@ -1046,40 +1265,65 @@
                     underlying: false
                 };
             }
-        }
-        
-        function toggleColumn(index, name) {
-            const isVisible = document.getElementById(`col-${name}`).checked;
-            columnVisibility[name] = isVisible;
             
-            // Save to localStorage
-            localStorage.setItem('columnVisibility', JSON.stringify(columnVisibility));
+            // Apply settings to checkboxes
+            Object.keys(columnSettings).forEach(col => {
+                const checkbox = document.getElementById(`col-${col}`);
+                if (checkbox) {
+                    checkbox.checked = columnSettings[col];
+                }
+            });
             
             // Apply to DataTable
-            if (optionsTable) {
-                optionsTable.column(index).visible(isVisible);
-            }
+            applyColumnVisibility();
+        }
+        
+        function showColumnModal() {
+            // Load current settings to modal
+            loadColumnSettings();
+            $('#columnModal').modal('show');
+        }
+        
+        function applyColumnSettings() {
+            // Get settings from checkboxes
+            const columns = ['symbol', 'type', 'strike', 'expiry', 'last', 'mark', 
+                           'volume', 'oi', 'delta', 'gamma', 'theta', 'vega', 'iv', 'underlying'];
+            
+            columns.forEach((col, index) => {
+                const checkbox = document.getElementById(`col-${col}`);
+                if (checkbox) {
+                    columnSettings[col] = checkbox.checked;
+                    // Apply to DataTable
+                    optionsTable.column(index).visible(checkbox.checked);
+                }
+            });
+            
+            // Save to localStorage
+            localStorage.setItem('columnVisibility', JSON.stringify(columnSettings));
+            
+            // Close modal
+            $('#columnModal').modal('hide');
         }
         
         function applyColumnVisibility() {
-            if (optionsTable) {
-                const columnMap = {
-                    symbol: 0, type: 1, strike: 2, expiry: 3,
-                    last: 4, mark: 5, volume: 6, oi: 7,
-                    delta: 8, gamma: 9, theta: 10, vega: 11,
-                    iv: 12, underlying: 13
-                };
-                
-                Object.keys(columnVisibility).forEach(key => {
-                    const index = columnMap[key];
-                    if (index !== undefined) {
-                        optionsTable.column(index).visible(columnVisibility[key]);
-                    }
-                });
-            }
+            if (!optionsTable) return;
+            
+            const columnMap = {
+                symbol: 0, type: 1, strike: 2, expiry: 3,
+                last: 4, mark: 5, volume: 6, oi: 7,
+                delta: 8, gamma: 9, theta: 10, vega: 11,
+                iv: 12, underlying: 13
+            };
+            
+            Object.keys(columnSettings).forEach(col => {
+                const index = columnMap[col];
+                if (index !== undefined) {
+                    optionsTable.column(index).visible(columnSettings[col]);
+                }
+            });
         }
         
-        function applyPreset(preset) {
+        function applyPresetColumns(preset) {
             const presets = {
                 basic: {
                     symbol: true, type: true, strike: true, expiry: true,
@@ -1094,7 +1338,7 @@
                     iv: true, underlying: true
                 },
                 greeks: {
-                    symbol: true, type: true, strike: true, expiry: true,
+                    symbol: true, type: true, strike: true, expiry: false,
                     last: false, mark: true, volume: false, oi: false,
                     delta: true, gamma: true, theta: true, vega: true,
                     iv: true, underlying: false
@@ -1108,36 +1352,27 @@
             };
             
             if (presets[preset]) {
-                columnVisibility = presets[preset];
-                
-                // Update checkboxes
-                Object.keys(columnVisibility).forEach(key => {
-                    const checkbox = document.getElementById(`col-${key}`);
+                Object.keys(presets[preset]).forEach(col => {
+                    const checkbox = document.getElementById(`col-${col}`);
                     if (checkbox) {
-                        checkbox.checked = columnVisibility[key];
+                        checkbox.checked = presets[preset][col];
                     }
                 });
-                
-                // Save and apply
-                localStorage.setItem('columnVisibility', JSON.stringify(columnVisibility));
-                applyColumnVisibility();
             }
         }
         
-        function resetColumns() {
-            applyPreset('trader');
-        }
-        
-        function toggleColumnPanel() {
-            const panel = document.getElementById('columnPanel');
-            const icon = document.getElementById('toggleIcon');
-            
-            if (panel.style.display === 'none') {
-                panel.style.display = 'block';
-                icon.className = 'fas fa-chevron-up';
-            } else {
-                panel.style.display = 'none';
-                icon.className = 'fas fa-chevron-down';
+        function removeAsset(symbol) {
+            if (confirm(`Remove ${symbol} from monitoring?`)) {
+                $.ajax({
+                    url: `/api/assets/${symbol}/remove`,
+                    method: 'DELETE',
+                    success: function() {
+                        location.reload();
+                    },
+                    error: function(xhr) {
+                        alert(xhr.responseJSON.error || 'Failed to remove asset');
+                    }
+                });
             }
         }
     </script>

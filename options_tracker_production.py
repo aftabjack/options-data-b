@@ -26,7 +26,7 @@ import redis
 import requests
 from pybit.unified_trading import WebSocket
 from redis.exceptions import ConnectionError, TimeoutError, RedisError
-from telegram_notifier import notification_manager
+from telegram_bot_notifier import bot_notifier as notification_manager
 
 
 # ==================== CONFIGURATION ====================
@@ -36,6 +36,9 @@ class Config:
     
     # API Settings
     API_URL = os.getenv('BYBIT_API_URL', 'https://api.bybit.com/v5/market/instruments-info')
+    API_KEY = os.getenv('BYBIT_API_KEY', '')
+    API_SECRET = os.getenv('BYBIT_API_SECRET', '')
+    TESTNET = os.getenv('BYBIT_TESTNET', 'false').lower() == 'true'
     API_TIMEOUT = int(os.getenv('API_TIMEOUT', '10'))
     API_RETRY_COUNT = int(os.getenv('API_RETRY_COUNT', '3'))
     API_RETRY_DELAY = float(os.getenv('API_RETRY_DELAY', '1.0'))
@@ -63,10 +66,10 @@ class Config:
     CACHE_DURATION_HOURS = int(os.getenv('CACHE_DURATION_HOURS', '24'))
     KNOWN_OPTION_ASSETS = os.getenv('OPTION_ASSETS', 'BTC,ETH,SOL').split(',')
     
-    # Performance Settings - OPTIMIZED
-    BATCH_SIZE = int(os.getenv('BATCH_SIZE', '200'))  # Increased from 100
-    BATCH_TIMEOUT = float(os.getenv('BATCH_TIMEOUT', '2.0'))  # Increased from 1.0
-    WRITE_QUEUE_SIZE = int(os.getenv('WRITE_QUEUE_SIZE', '5000'))  # Reduced from 10000
+    # Performance Settings - OPTIMIZED FOR LOWER MEMORY
+    BATCH_SIZE = int(os.getenv('BATCH_SIZE', '100'))  # Reduced for memory
+    BATCH_TIMEOUT = float(os.getenv('BATCH_TIMEOUT', '1.0'))  # Faster writes
+    WRITE_QUEUE_SIZE = int(os.getenv('WRITE_QUEUE_SIZE', '2000'))  # Reduced from 5000
     STATS_INTERVAL = int(os.getenv('STATS_INTERVAL', '60'))  # Increased from 30
     
     # Logging
@@ -159,13 +162,13 @@ class ProductionOptionsTracker:
         except (ConnectionError, TimeoutError) as e:
             logger.error(f"Redis connection failed: {e}")
             if self.notifications_enabled:
-                asyncio.create_task(notification_manager.redis_connection_failed(str(e)))
+                asyncio.create_task(notification_manager.redis_critical(str(e)))
             return False
         except Exception as e:
             logger.error(f"Unexpected Redis error: {e}")
             if self.notifications_enabled:
-                asyncio.create_task(notification_manager.handle_error(
-                    "Redis", f"Unexpected error: {e}", critical=True
+                asyncio.create_task(notification_manager.redis_critical(
+                    f"Unexpected error: {e}"
                 ))
             return False
     
@@ -209,7 +212,7 @@ class ProductionOptionsTracker:
                 logger.error(f"Batch writer error: {e}")
                 self.metrics['redis_errors'] += 1
                 if self.notifications_enabled and self.metrics['redis_errors'] % 10 == 0:
-                    await notification_manager.handle_error(
+                    await notification_manager.send_critical(
                         "BatchWriter", 
                         f"Multiple batch write failures: {self.metrics['redis_errors']} errors",
                         {"Last Error": str(e)}
@@ -228,20 +231,17 @@ class ProductionOptionsTracker:
                 
                 hash_key = f"option:{symbol}"
                 
-                # Use HSET for main data
+                # Use HSET for main data (including symbol field)
                 pipe.hset(hash_key, mapping={
                     k: str(v) if v is not None else ""
-                    for k, v in item.items() if k != 'symbol'
+                    for k, v in item.items()
                 })
                 
                 # Set TTL
                 pipe.expire(hash_key, 86400)
                 
-                # Update time series (keep only last 100)
-                ts_key = f"ts:{symbol}"
-                pipe.zadd(ts_key, {json.dumps(item): item['timestamp']})
-                pipe.zremrangebyrank(ts_key, 0, -101)
-                pipe.expire(ts_key, 86400)
+                # Skip time series storage to save memory (not used anywhere)
+                # Previously stored 100 entries per symbol = high memory usage
             
             # Update global stats
             pipe.hincrby("stats:global", "messages", len(batch))
@@ -257,7 +257,7 @@ class ProductionOptionsTracker:
             logger.error(f"Redis pipeline error: {e}")
             self.metrics['redis_errors'] += 1
             if self.notifications_enabled and self.metrics['redis_errors'] % 10 == 0:
-                await notification_manager.handle_error(
+                await notification_manager.send_critical(
                     "Redis Pipeline",
                     f"Pipeline write failures: {self.metrics['redis_errors']} total errors",
                     {"Error": str(e), "Batch Size": len(batch)}
@@ -358,9 +358,9 @@ class ProductionOptionsTracker:
                 if attempt > 1:  # Only log retries
                     print(f"Reconnection attempt {attempt}/{max_attempts}")
                 
-                # Initialize WebSocket
+                # Initialize WebSocket (uses Config.TESTNET from .env)
                 self.ws = WebSocket(
-                    testnet=False,
+                    testnet=Config.TESTNET,
                     channel_type="option",
                     ping_interval=Config.WS_PING_INTERVAL,
                     ping_timeout=Config.WS_PING_TIMEOUT
@@ -434,9 +434,17 @@ class ProductionOptionsTracker:
                 if cursor:
                     params["cursor"] = cursor
                 
+                # Prepare headers (add authentication if credentials are provided)
+                headers = {}
+                if Config.API_KEY and Config.API_SECRET:
+                    # Note: For public endpoints, authentication is not required
+                    # This is here for future use with private endpoints
+                    headers['X-BAPI-API-KEY'] = Config.API_KEY
+                
                 response = requests.get(
                     Config.API_URL,
                     params=params,
+                    headers=headers,
                     timeout=Config.API_TIMEOUT
                 )
                 response.raise_for_status()
@@ -560,9 +568,9 @@ class ProductionOptionsTracker:
         """Main execution loop with all optimizations"""
         print("Bybit Options Tracker started")
         
-        # Initialize notifications if enabled
+        # Notifications are initialized automatically with bot notifier
         if self.notifications_enabled:
-            await notification_manager.initialize()
+            pass  # Bot notifier is ready
         
         # Initialize Redis
         if not self.init_redis():
@@ -594,11 +602,8 @@ class ProductionOptionsTracker:
         if not success:
             logger.error("Failed to establish WebSocket connection")
             if self.notifications_enabled:
-                await notification_manager.handle_error(
-                    "WebSocket",
-                    "Failed to establish initial WebSocket connection",
-                    {"Symbols Count": len(symbols)},
-                    critical=True
+                await notification_manager.websocket_critical(
+                    f"Failed to establish initial connection for {len(symbols)} symbols"
                 )
             self.running = False
             return
@@ -621,7 +626,7 @@ class ProductionOptionsTracker:
                     if time_since_last > 60:
                         # Silently attempt reconnect
                         if self.notifications_enabled and time_since_last > 120:
-                            await notification_manager.websocket_disconnected(
+                            await notification_manager.websocket_critical(
                                 f"No data for {time_since_last} seconds"
                             )
                         await self.subscribe_with_retry(symbols)
@@ -646,15 +651,13 @@ class ProductionOptionsTracker:
         
         self.running = False
         
-        # Send shutdown notification
-        if self.notifications_enabled:
-            await notification_manager.shutdown()
+        # No shutdown notification (not critical)
+        pass
         
-        # Process remaining queue items
-        # Process remaining items silently
-            remaining = list(self.write_queue)
-            if remaining:
-                await self._write_batch_with_pipeline(remaining)
+        # Process remaining queue items silently
+        remaining = list(self.write_queue)
+        if remaining:
+            await self._write_batch_with_pipeline(remaining)
         
         # Cancel tasks
         if self.batch_writer_task:

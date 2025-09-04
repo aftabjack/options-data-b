@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  # Redis - REQUIRED for live data storage (latest packet only)
+  redis:
+    image: redis:7-alpine
+    container_name: bybit-redis-minimal
+    ports:
+      - "${REDIS_PORT:-6380}:6379"
+    volumes:
+      - /dev/null:/data  # No persistence - RAM only
+    command: redis-server --save "" --appendonly no --maxmemory 50mb --maxmemory-policy allkeys-lru
+    networks:
+      - bybit-network
+    mem_limit: 64m  # Reduced from 512m
+    memswap_limit: 64m
+    restart: ${RESTART_POLICY:-unless-stopped}
+
+  # Tracker - REQUIRED for WebSocket connection
+  tracker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: bybit-tracker-minimal
+    depends_on:
+      redis:
+        condition: service_started
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+      - CLEAR_DB_ON_START=true
+      - BATCH_SIZE=50  # Reduced
+      - BATCH_TIMEOUT=0.5  # Faster updates
+      - WRITE_QUEUE_SIZE=500  # Minimal queue
+      - ENABLE_NOTIFICATIONS=${ENABLE_NOTIFICATIONS:-false}
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-}
+      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID:-}
+      - PROJECT_NAME=${PROJECT_NAME:-Bybit Options Minimal}
+      - LOG_LEVEL=ERROR  # Less logging
+    networks:
+      - bybit-network
+    mem_limit: 128m  # Reduced from 256m
+    memswap_limit: 128m
+    restart: ${RESTART_POLICY:-unless-stopped}
+
+networks:
+  bybit-network:
+    driver: bridge
+    name: ${DOCKER_NETWORK_NAME:-bybit-network}
+
+# Total memory usage: ~90-100 MB (vs 230 MB full setup)
